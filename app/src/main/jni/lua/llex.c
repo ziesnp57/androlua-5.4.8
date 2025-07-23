@@ -29,7 +29,7 @@
 
 
 
-#define next(ls)	(ls->current = zgetc(ls->z))
+#define next(ls)	(ls->current = zgetc(ls->z), ls->curpos++)
 
 
 
@@ -38,10 +38,11 @@
 
 /* ORDER RESERVED */
 static const char *const luaX_tokens [] = {
-    "and", "break", "do", "else", "elseif",
+    "and", "break", "case", "continue", "default", "do", "else", "elseif",
     "end", "false", "for", "function", "goto", "if",
     "in", "local", "nil", "not", "or", "repeat",
-    "return", "then", "true", "until", "while",
+    "return", "switch", "then", "true", "until", "while",
+
     "//", "..", "...", "==", ">=", "<=", "~=",
     "<<", ">>", "::", "<eof>",
     "<number>", "<integer>", "<name>", "<string>"
@@ -56,6 +57,18 @@ static l_noret lexerror (LexState *ls, const char *msg, int token);
 
 static void save (LexState *ls, int c) {
   Mbuffer *b = ls->buff;
+  if (luaZ_bufflen(b) + 1 > luaZ_sizebuffer(b)) {
+    size_t newsize;
+    if (luaZ_sizebuffer(b) >= MAX_SIZE/2)
+      lexerror(ls, "lexical element too long", 0);
+    newsize = luaZ_sizebuffer(b) * 2;
+    luaZ_resizebuffer(ls->L, b, newsize);
+  }
+  b->buffer[luaZ_bufflen(b)++] = cast_char(c);
+}
+
+static void saveA (LexState *ls, int c) {
+  Mbuffer *b = ls->lastbuff;
   if (luaZ_bufflen(b) + 1 > luaZ_sizebuffer(b)) {
     size_t newsize;
     if (luaZ_sizebuffer(b) >= MAX_SIZE/2)
@@ -96,6 +109,33 @@ const char *luaX_token2str (LexState *ls, int token) {
 }
 
 
+static const char *txtToken22 (LexState *ls, int token) {
+  switch (token) {
+    case TK_NAME:
+    {
+      if(ls->lastbuff!=NULL){
+        saveA(ls, '\0');
+        return luaO_pushfstring(ls->L, "'%s'", luaZ_buffer(ls->lastbuff));
+      }else {
+        save(ls, '\0');
+        return luaO_pushfstring(ls->L, "'%s'", luaZ_buffer(ls->buff));
+      }
+    }
+      case TK_STRING:
+      {
+        return luaO_pushfstring(ls->L, "'%s'", "<STRING>");
+      }
+    case TK_FLT: {
+        return luaO_pushfstring(ls->L, "'%d'",(long long) ls->t.seminfo.r);
+    }
+    case TK_INT: {
+      return luaO_pushfstring(ls->L, "'%d'", (long long)ls->t.seminfo.i);
+    }
+    default:
+      return luaX_token2str(ls, token);
+  }
+}
+
 static const char *txtToken (LexState *ls, int token) {
   switch (token) {
     case TK_NAME: case TK_STRING:
@@ -110,8 +150,11 @@ static const char *txtToken (LexState *ls, int token) {
 
 static l_noret lexerror (LexState *ls, const char *msg, int token) {
   msg = luaG_addinfo(ls->L, msg, ls->source, ls->linenumber);
-  if (token)
-    luaO_pushfstring(ls->L, "%s near %s", msg, txtToken(ls, token));
+  if (token) {
+    luaO_pushfstring(ls->L, "tokenpos: %d, Line: %d, LastToken: %s, description: %s near %s",
+                     ls->tokpos,ls->lastline,
+                     txtToken22(ls,ls->lasttoken),msg, txtToken(ls, token));
+  }
   luaD_throw(ls->L, LUA_ERRSYNTAX);
 }
 
@@ -510,6 +553,29 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         if (check_next1(ls, '=')) return TK_NE;  /* '~=' */
         else return '~';
       }
+      case '!':{
+        next(ls);
+        if(check_next1(ls,'=')) return TK_NE;
+        else return TK_NOT;
+      }
+      case '&':{
+        next(ls);
+        if(check_next1(ls,'&')) return TK_AND;
+        else return '&';
+      }
+      case '?':{
+        next(ls);
+        return TK_AND;
+      }
+      case '@':{
+        next(ls);
+        return TK_OR;
+      }
+      case '|':{
+        next(ls);
+        if(check_next1(ls,'|')) return TK_OR;
+        else return '|';
+      }
       case ':': {
         next(ls);
         if (check_next1(ls, ':')) return TK_DBCOLON;  /* '::' */
@@ -537,11 +603,11 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         return TK_EOS;
       }
       default: {
-        if (lislalpha(ls->current)) {  /* identifier or reserved word? */
+        if (lislalpha(ls->current)||ls->current>=0x80) {  /* identifier or reserved word? */
           TString *ts;
           do {
             save_and_next(ls);
-          } while (lislalnum(ls->current));
+          } while (lislalnum(ls->current)||ls->current>=0x80);
           ts = luaX_newstring(ls, luaZ_buffer(ls->buff),
                                   luaZ_bufflen(ls->buff));
           seminfo->ts = ts;
@@ -564,6 +630,9 @@ static int llex (LexState *ls, SemInfo *seminfo) {
 
 void luaX_next (LexState *ls) {
   ls->lastline = ls->linenumber;
+  ls->lasttoken = ls->t.token;
+  ls->lastbuff = ls->buff;
+  ls->tokpos = ls->curpos;
   if (ls->lookahead.token != TK_EOS) {  /* is there a look-ahead token? */
     ls->t = ls->lookahead;  /* use this one */
     ls->lookahead.token = TK_EOS;  /* and discharge it */
