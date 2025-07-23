@@ -1,0 +1,59 @@
+apply plugin: 'com.android.application'
+android {
+    compileSdkVersion 30
+    namespace 'com.androlua'
+    defaultConfig {
+        applicationId "com.androlua"
+        minSdkVersion 19
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 25
+        multiDexEnabled false
+        ndk {
+            ldLibs "log"
+            android.ndkVersion "22.1.7171670"
+            abiFilters 'arm64-v8a'
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            debuggable false
+            multiDexEnabled false
+            jniDebuggable false
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
+            jniDebuggable false
+        }
+
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+    productFlavors {
+    }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_11
+    }
+    ndkVersion '25.0.8775105'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.annotation:annotation:1.4.0'
+    implementation 'androidx.core:core:1.6.0'
+    implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
+    implementation 'cn.wanghaomiao:JsoupXpath:2.5.1'
+    implementation 'org.apache.commons:commons-compress:1.21'
+    implementation 'commons-io:commons-io:2.5'
+}
