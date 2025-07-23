@@ -25,7 +25,7 @@ function onVersionChanged(n, o)
     local title = "更新" .. o .. ">" .. n
     local msg = [[
 
-    优化支持Lua 5.4.4
+    优化支持Lua 5.4.8
 
   ]]
     if o == "" then
@@ -881,7 +881,7 @@ func.check = function(b)
     if luapath:find("%.aly$") then
         src = "return " .. src
     end
-    local _, data = loadstring(src)
+    local _, data = load(src)
     if data then
         _,_,u1,u2=data:find("(.+), description:(.+)")
         if u1 then

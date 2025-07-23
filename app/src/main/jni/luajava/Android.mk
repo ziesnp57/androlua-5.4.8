@@ -1,17 +1,26 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lua
-LOCAL_CFLAGS += -std=c17
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../lua
+LOCAL_CFLAGS := -std=c17 -O3 -flto \
+                -march=armv8-a \
+                -funroll-loops -fomit-frame-pointer \
+                -ffunction-sections -fdata-sections \
+                -fstrict-aliasing
 
-CAL_ARM_MODE := arm
-TARGET_PLATFORM := arm64-v8a
-TARGET_ABI := android-30-arm64
+LOCAL_CFLAGS += -g0 -DNDEBUG
+
+# 极致性能构建配置
+LOCAL_CFLAGS += -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables
+
+# 链接选项
+LOCAL_LDFLAGS := -flto -fuse-linker-plugin -Wl,--gc-sections
 
 LOCAL_MODULE     := luajava
 LOCAL_SRC_FILES  := luajava.c
-LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog -ldl
-LOCAL_STATIC_LIBRARIES := liblua
 
+LOCAL_STATIC_LIBRARIES := lua
+
+# 系统库链接
+LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog -ldl
 include $(BUILD_SHARED_LIBRARY)
