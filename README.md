@@ -3,7 +3,7 @@ Lua 5.4.8 for Android
 
 
 # 本项目更改内容
-升级Lua为官方5.4.8版，未适配原版的switch case语句和module函数等，故对相应的.lua做了对应修改，以保证打包后项目应用能正常运行
+升级Lua为官方5.4.8版
 
 原仓库链接https://github.com/nirenr/AndroLua_pro
 
