@@ -20,6 +20,11 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#define LOG_TAG "lua"
+#define LOGD(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#endif
 
 static int luaB_print (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
@@ -30,6 +35,9 @@ static int luaB_print (lua_State *L) {
     if (i > 1)  /* not the first element? */
       lua_writestring("\t", 1);  /* add a tab before it */
     lua_writestring(s, l);  /* print it */
+#ifdef __ANDROID__
+      LOGD("%s", s);
+#endif
     lua_pop(L, 1);  /* pop result */
   }
   lua_writeline();
@@ -108,6 +116,32 @@ static int luaB_tonumber (lua_State *L) {
   }  /* else not a number */
   luaL_pushfail(L);  /* not a number */
   return 1;
+}
+
+
+static int luaB_tointeger (lua_State *L) {
+    if (lua_type(L, 1) == LUA_TNUMBER){
+        if (lua_isinteger(L, 1)) {
+            lua_settop(L, 1);
+            return 1;
+        }
+        else {
+            lua_Number n = lua_tonumber(L, 1);
+            lua_pushinteger(L, (lua_Integer)n);
+            return 1;
+        }
+    }
+    else {
+        size_t l;
+        const char *s = luaL_tolstring(L, 1, &l);
+        if (s != NULL && lua_stringtonumber(L, s) == l + 1) {
+            lua_Number n = lua_tonumber(L, 1);
+            lua_pushinteger(L, (lua_Integer)n);
+            return 1;
+        }
+    }
+    lua_pushnil(L);
+    return 1;
 }
 
 
@@ -319,7 +353,6 @@ static int luaB_ipairs (lua_State *L) {
   return 3;
 }
 
-
 static int load_aux (lua_State *L, int status, int envidx) {
   if (l_likely(status == LUA_OK)) {
     if (envidx != 0) {  /* 'env' parameter? */
@@ -525,6 +558,7 @@ static const luaL_Reg base_funcs[] = {
   {"select", luaB_select},
   {"setmetatable", luaB_setmetatable},
   {"tonumber", luaB_tonumber},
+  {"tonumber", luaB_tointeger},
   {"tostring", luaB_tostring},
   {"type", luaB_type},
   {"xpcall", luaB_xpcall},
