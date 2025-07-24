@@ -911,6 +911,24 @@ LUA_API void lua_rawset (lua_State *L, int idx) {
 }
 
 
+//mod by nirenr
+LUA_API void lua_const (lua_State *L, int idx) {
+    TValue *t;
+    lua_lock(L);
+    api_checknelems(L, 2);
+    t = index2value(L, idx);
+    api_check(L, ttistable(o), "table expected");
+    if(hvalue(t)->type==1)
+        hvalue(t)->type=3;
+    else
+        hvalue(t)->type=2;
+    sethvalue(L, L->top.p, hvalue(t));  /* anchor it */
+    invalidateTMcache(hvalue(t));
+    luaC_barrierback(L, hvalue(t), s2v(L->top.p - 1));
+    lua_unlock(L);
+}
+
+
 LUA_API void lua_rawsetp (lua_State *L, int idx, const void *p) {
   TValue k;
   setpvalue(&k, cast_voidp(p));

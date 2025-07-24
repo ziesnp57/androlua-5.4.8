@@ -57,6 +57,129 @@ static void checktab (lua_State *L, int arg, int what) {
   }
 }
 
+//mod by nirenr
+#if defined(LUA_COMPAT_MAXN)
+static int maxn (lua_State *L) {
+  lua_Number max = 0;
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_pushnil(L);  /* first key */
+  while (lua_next(L, 1)) {
+    lua_pop(L, 1);  /* remove value */
+    if (lua_type(L, -1) == LUA_TNUMBER) {
+      lua_Number v = lua_tonumber(L, -1);
+      if (v > max) max = v;
+    }
+  }
+  lua_pushnumber(L, max);
+  return 1;
+}
+
+static int size (lua_State *L) {
+  lua_Integer i = 0;
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_pushnil(L);  /* first key */
+  while (lua_next(L, 1)) {
+    lua_pop(L, 1);  /* remove value */
+    i++;
+   }
+  lua_pushinteger(L, i);
+  return 1;
+}
+
+static int clear (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_pushnil(L);  /* first key */
+  while (lua_next(L, 1)) {
+    lua_pop(L, 1);  /* remove value */
+    lua_pushvalue(L,-1);
+    lua_pushnil(L);
+    lua_settable(L,-4);
+   }
+  return 0;
+}
+
+static int find (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_pushvalue(L,3);  /* first key */
+  while (lua_next(L, 1)) {
+    if(lua_rawequal(L,-1,2)){
+      lua_pop(L,1);
+      return 1;
+    }
+    lua_pop(L, 1);  /* remove value */
+  }
+  lua_pushnil(L);
+  return 1;
+}
+
+static int gfind_aux (lua_State *L) {
+  lua_settop(L,0);
+  lua_pushvalue(L,lua_upvalueindex(1));
+  lua_pushvalue(L,lua_upvalueindex(2));
+  lua_pushvalue(L,lua_upvalueindex(3));
+  while (lua_next(L, 1)) {
+    if(lua_rawequal(L,-1,2)){
+      lua_pop(L,1);
+      lua_pushvalue(L,-1);
+      lua_replace(L, lua_upvalueindex(3));
+      return 1;
+    }
+    lua_pop(L, 1);  /* remove value */
+  }
+  return 0;
+}
+
+static int gfind (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  if(lua_gettop(L)==2)
+      lua_pushnil(L);
+  lua_pushcclosure(L,gfind_aux,3);
+  return 1;
+}
+
+static int clone_aux (lua_State *L,int idx) {
+    luaL_checktype(L, idx, LUA_TTABLE);
+    const char *id = lua_pushfstring(L, "%p",
+                                      lua_topointer(L, idx));
+    lua_gettable(L,1);
+    if(lua_type(L,-1)!=LUA_TNIL){
+        lua_remove(L,idx);
+        return 1;
+    }
+    lua_remove(L,idx+1);
+    lua_newtable(L);
+    lua_pushvalue(L,-1);
+    lua_setfield(L,1,id);
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, idx)) {
+        if(lua_type(L,idx+3)==LUA_TTABLE)
+           clone_aux(L,idx+3);
+        lua_pushvalue(L,idx+2);
+        lua_insert(L,idx+2);
+        lua_settable(L,idx+1);
+    }
+    if(lua_getmetatable(L,idx))
+      lua_setmetatable(L,idx+1);
+    lua_remove(L,idx);
+    return 1;
+}
+
+static int clone (lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_newtable(L);
+    lua_insert(L,1);
+    clone_aux(L,2);
+    lua_remove(L,1);
+  return 1;
+}
+
+static int tconst (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_const(L,1);
+  return 1;
+}
+#endif
+//---
 
 static int tinsert (lua_State *L) {
   lua_Integer pos;  /* where to insert new element */
@@ -408,23 +531,79 @@ static int sort (lua_State *L) {
   return 0;
 }
 
+
+//mod by nirenr
+#if defined(LUA_COMPAT_FOREACH)
+static int foreachi (lua_State *L) {
+  int i;
+  lua_Integer n = aux_getn(L, 1, TAB_RW);
+  luaL_checktype(L, 2, LUA_TFUNCTION);
+  for (i=1; i <= n; i++) {
+    lua_pushvalue(L, 2);  /* function */
+    lua_pushinteger(L, i);  /* 1st argument */
+    lua_rawgeti(L, 1, i);  /* 2nd argument */
+    lua_call(L, 2, 1);
+    if (!lua_isnil(L, -1))
+      return 1;
+    lua_pop(L, 1);  /* remove nil result */
+  }
+  return 0;
+}
+
+
+static int foreach (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  luaL_checktype(L, 2, LUA_TFUNCTION);
+  lua_pushnil(L);  /* first key */
+  while (lua_next(L, 1)) {
+    lua_pushvalue(L, 2);  /* function */
+    lua_pushvalue(L, -3);  /* key */
+    lua_pushvalue(L, -3);  /* value */
+    lua_call(L, 2, 1);
+    if (!lua_isnil(L, -1))
+      return 1;
+    lua_pop(L, 2);  /* remove value and result */
+  }
+  return 0;
+}
+#endif
+
+
 /* }====================================================== */
 
 
 static const luaL_Reg tab_funcs[] = {
-  {"concat", tconcat},
-  {"insert", tinsert},
-  {"pack", tpack},
-  {"unpack", tunpack},
-  {"remove", tremove},
-  {"move", tmove},
-  {"sort", sort},
-  {NULL, NULL}
+        {"concat", tconcat},
+#if defined(LUA_COMPAT_FOREACH)
+        {"foreach", foreach},
+  {"foreachi", foreachi},
+#endif
+#if defined(LUA_COMPAT_MAXN)
+        {"maxn", maxn},
+  {"size", size},
+  {"clear", clear},
+  {"find", find},
+  {"gfind", gfind},
+  {"clone", clone},
+  {"const", tconst},
+#endif
+        {"insert", tinsert},
+        {"pack", tpack},
+        {"unpack", tunpack},
+        {"remove", tremove},
+        {"move", tmove},
+        {"sort", sort},
+        {NULL, NULL}
 };
 
 
 LUAMOD_API int luaopen_table (lua_State *L) {
-  luaL_newlib(L, tab_funcs);
-  return 1;
+    luaL_newlib(L, tab_funcs);
+#if defined(LUA_COMPAT_UNPACK)
+    /* _G.unpack = table.unpack */
+  lua_getfield(L, -1, "unpack");
+  lua_setglobal(L, "unpack");
+#endif
+    return 1;
 }
 

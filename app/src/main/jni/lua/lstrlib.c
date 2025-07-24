@@ -96,6 +96,12 @@ static size_t getendpos (lua_State *L, int arg, lua_Integer def,
   else return len + (size_t)pos + 1;
 }
 
+/* translate a relative string position: negative means back from end */
+static lua_Integer posrelat (lua_Integer pos, size_t len) {
+    if (pos >= 0) return pos;
+    else if (0u - (size_t)pos > len) return 0;
+    else return (lua_Integer)len + pos + 1;
+}
 
 static int str_sub (lua_State *L) {
   size_t l;
@@ -818,6 +824,69 @@ static int str_find_aux (lua_State *L, int find) {
 
 static int str_find (lua_State *L) {
   return str_find_aux(L, 1);
+}
+
+
+//mod by nirenr
+static int gfind_aux (lua_State *L) {
+    size_t ls, lp;
+    const char *s = lua_tolstring(L, lua_upvalueindex(1), &ls);
+    const char *p = lua_tolstring(L, lua_upvalueindex(2), &lp);
+    lua_Integer init = posrelat(luaL_optinteger(L, lua_upvalueindex(3), 1), ls);
+    if (init < 1) init = 1;
+    else if (init > (lua_Integer)ls + 1) {  /* start after string's end? */
+        return 0;  /* cannot find anything */
+    }
+    /* explicit request or no special characters? */
+    if (lua_toboolean(L, lua_upvalueindex(4)) || nospecials(p, lp)) {
+        /* do a plain search */
+        const char *s2 = lmemfind(s + init - 1, ls - (size_t)init + 1, p, lp);
+        if (s2) {
+            lua_pushinteger(L, (s2 - s) + 1);
+            lua_pushinteger(L, (s2 - s) + lp);
+            lua_pushinteger(L,(s2 - s) + lp + 1);
+            lua_replace(L, lua_upvalueindex(3));
+            return 2;
+        }
+    }
+    else {
+        MatchState ms;
+        const char *s1 = s + init - 1;
+        int anchor = (*p == '^');
+        if (anchor) {
+            p++; lp--;  /* skip anchor character */
+        }
+        ms.L = L;
+        ms.matchdepth = MAXCCALLS;
+        ms.src_init = s;
+        ms.src_end = s + ls;
+        ms.p_end = p + lp;
+        do {
+            const char *res;
+            ms.level = 0;
+            lua_assert(ms.matchdepth == MAXCCALLS);
+            if ((res=match(&ms, s1, p)) != NULL) {
+                lua_pushinteger(L, (s1 - s) + 1);  /* start */
+                lua_pushinteger(L, res - s);   /* end */
+                lua_pushinteger(L, res - s + 1);
+                lua_replace(L, lua_upvalueindex(3));
+                return push_captures(&ms, NULL, 0) + 2;
+            }
+        } while (s1++ < ms.src_end && !anchor);
+    }
+    return 0;  /* not found */
+}
+
+//mod by nirenr
+static int gfind (lua_State *L) {
+    luaL_checkstring(L, 1);
+    luaL_checkstring(L, 2);
+    int b = lua_toboolean(L, 3);
+    lua_settop(L, 2);
+    lua_pushinteger(L, 0);
+    lua_pushboolean(L, b);
+    lua_pushcclosure(L, gfind_aux, 4);
+    return 1;
 }
 
 
@@ -1832,6 +1901,7 @@ static const luaL_Reg strlib[] = {
   {"char", str_char},
   {"dump", str_dump},
   {"find", str_find},
+  {"gfind", gfind},
   {"format", str_format},
   {"gmatch", gmatch},
   {"gsub", str_gsub},

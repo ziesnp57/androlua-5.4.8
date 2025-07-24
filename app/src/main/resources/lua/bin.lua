@@ -283,12 +283,12 @@ local function binapk(luapath, apkpath)
     end
 
     function touint32(i)
-        local code = string.format("%08x", i)
-        local uint = {}
-        for n in code:gmatch("..") do
-            table.insert(uint, 1, string.char(tonumber(n, 16)))
-        end
-        return table.concat(uint)
+        return string.char(
+            i & 0xFF,
+            (i >> 8) & 0xFF,
+            (i >> 16) & 0xFF,
+            (i >> 24) & 0xFF
+        )
     end
 
     this.update("正在打包...");
