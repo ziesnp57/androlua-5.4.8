@@ -3528,7 +3528,7 @@ int isJavaObject(lua_State * L, int idx)
 
 int _EXPORT luaopen_canvas(lua_State * L)
 {
-	static const struct luaL_reg funcs[] = {
+	static const struct luaL_Reg funcs[] = {
 		{"get", getCanvas},
 		{"clipPath", clipPath},
 		{"clipRect", clipRect},

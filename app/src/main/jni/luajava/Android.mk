@@ -3,7 +3,6 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../lua
 LOCAL_CFLAGS := -std=c17 -O3 -flto \
-                -march=armv8-a \
                 -funroll-loops -fomit-frame-pointer \
                 -ffunction-sections -fdata-sections \
                 -fstrict-aliasing

@@ -3,7 +3,6 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := lua
 LOCAL_CFLAGS := -std=c17 -O3 -flto \
-                -march=armv8-a \
                 -funroll-loops -fomit-frame-pointer \
                 -ffunction-sections -fdata-sections \
                 -fstrict-aliasing
@@ -52,6 +51,6 @@ LOCAL_SRC_FILES := \
 	lvm.c \
 	lzio.c
 
-LOCAL_CFLAGS := -DLUA_DL_DLOPEN
+LOCAL_CFLAGS += -DLUA_DL_DLOPEN -DLUA_COMPAT_MATHLIB
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog -ldl
 include $(BUILD_STATIC_LIBRARY) 

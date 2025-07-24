@@ -265,10 +265,10 @@ m = {
             id = "more_manual", },
         { MenuItem,
             title = "支持作者",
-            id = "", },
+            id = "more_donation", },
         { MenuItem,
             title = "联系作者",
-            id = "", },
+            id = "more_qq", },
         { MenuItem,
             title = "关于",
             id = "more_about", },
@@ -881,7 +881,7 @@ func.check = function(b)
     if luapath:find("%.aly$") then
         src = "return " .. src
     end
-    local _, data = load(src)
+    local _, data = loadstring(src)
     if data then
         _,_,u1,u2=data:find("(.+), description:(.+)")
         if u1 then
@@ -1033,27 +1033,12 @@ func.helper = function()
 end
 func["布局助手"] = func.helper
 func.donation = function()
-    xpcall(function()
-        local url = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=10.2.80.8000&qrcode=https://qr.alipay.com/fkx18836ugaohvlja7yg5ef"
-        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-    end,
-    function()
-        local url = "https://qr.alipay.com/fkx18836ugaohvlja7yg5ef";
-        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-    end)
-end
-qqurl = "mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26jump_from%3Dwebapi%26k%3D"
-key = "wokQ91xBLhWdewTWqMtEYkHcDu_bOA5l"
-function joinQQGroup(key)
-    import "android.content.Intent"
-    import "android.net.Uri"
-    local intent = Intent();
-    intent.setData(Uri.parse(qqurl .. key));
-    activity.startActivity(intent);
+
 end
 
+
 func.qq = function()
-    joinQQGroup(key)
+
 end
 
 func.about = function()
