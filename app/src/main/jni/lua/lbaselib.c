@@ -558,7 +558,7 @@ static const luaL_Reg base_funcs[] = {
   {"select", luaB_select},
   {"setmetatable", luaB_setmetatable},
   {"tonumber", luaB_tonumber},
-  {"tonumber", luaB_tointeger},
+  {"tointeger", luaB_tointeger},
   {"tostring", luaB_tostring},
   {"type", luaB_type},
   {"xpcall", luaB_xpcall},
