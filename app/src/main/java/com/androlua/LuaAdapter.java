@@ -18,7 +18,7 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaFunction;
 import com.luajava.LuaJavaAPI;
 import com.luajava.LuaObject;
@@ -77,7 +77,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
                     mLuaFilter.call(mBaseData, newValues, mPrefix);
                     mData = newValues;
                     notifyDataSetChanged();
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                     mContext.sendError("performFiltering", e);
                 }
@@ -89,11 +89,11 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
     private ArrayFilter mFilter;
     private LuaFunction mLuaFilter;
 
-    public LuaAdapter(LuaContext context, LuaTable layout) throws LuaError {
+    public LuaAdapter(LuaContext context, LuaTable layout) throws LuaException {
         this(context, null, layout);
     }
 
-    public LuaAdapter(LuaContext context, LuaTable<Integer, LuaTable<String, Object>> data, LuaTable layout) throws LuaError {
+    public LuaAdapter(LuaContext context, LuaTable<Integer, LuaTable<String, Object>> data, LuaTable layout) throws LuaException {
         mContext = context;
         mLayout = layout;
         mRes = mContext.getContext().getResources();
@@ -215,7 +215,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
                 L.pop(1);
                 view = loadlayout.call(mLayout, holder, AbsListView.class);
                 view.setTag(holder);
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 return new View(mContext.getContext());
             }
         } else {
@@ -273,7 +273,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
         return view;
     }
 
-    private void setFields(View view, LuaTable<String, Object> fields) throws LuaError {
+    private void setFields(View view, LuaTable<String, Object> fields) throws LuaException {
         Set<Map.Entry<String, Object>> sets = fields.entrySet();
         for (Map.Entry<String, Object> entry2 : sets) {
             String key2 = entry2.getKey();
@@ -310,7 +310,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
         }
     }
 
-    private int javaSetter(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetter(Object obj, String methodName, Object value) throws LuaException {
 
         if (methodName.length() > 2 && methodName.substring(0, 2).equals("on") && value instanceof LuaFunction)
             return javaSetListener(obj, methodName, value);
@@ -318,7 +318,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
         return javaSetMethod(obj, methodName, value);
     }
 
-    private int javaSetListener(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetListener(Object obj, String methodName, Object value) throws LuaException {
         String name = "setOn" + methodName.substring(2) + "Listener";
         ArrayList<Method> methods = LuaJavaAPI.getMethod(obj.getClass(), name, false);
         for (Method m : methods) {
@@ -333,14 +333,14 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
                     m.invoke(obj, listener);
                     return 1;
                 } catch (Exception e) {
-                    throw new LuaError(e);
+                    throw new LuaException(e);
                 }
             }
         }
         return 0;
     }
 
-    private int javaSetMethod(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetMethod(Object obj, String methodName, Object value) throws LuaException {
         if (Character.isLowerCase(methodName.charAt(0))) {
             methodName = Character.toUpperCase(methodName.charAt(0)) + methodName.substring(1);
         }
@@ -389,9 +389,9 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
             }
         }
         if (buf.length() > 0)
-            throw new LuaError("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
+            throw new LuaException("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
         else
-            throw new LuaError("Invalid setter " + methodName + " is not a method.\n");
+            throw new LuaException("Invalid setter " + methodName + " is not a method.\n");
 
     }
 
@@ -424,7 +424,7 @@ public class LuaAdapter extends BaseAdapter implements Filterable {
                 LuaBitmap.getBitmap(mContext, mPath);
                 mHandler.sendEmptyMessage(0);
             } catch (IOException e) {
-                mContext.sendError("AsyncLoader", e);
+                mContext.sendError("AsyncLoader Error", e);
             }
 
         }

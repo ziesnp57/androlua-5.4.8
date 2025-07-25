@@ -33,7 +33,7 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import com.luajava.LuaTable;
+
 /**
  * This class represents a Lua object of any type. A LuaObject is constructed by a {@link LuaState} object using one of
  * the four methods:
@@ -62,10 +62,16 @@ public class LuaObject implements Serializable {
 
 	protected final LuaState L;
 
+
 	protected LuaObject(LuaState L) {
 		this.L = L;
 	}
-
+	/**
+	 * Creates a reference to an object in the variable globalName
+	 * 
+	 * @param L
+	 * @param globalName
+	 */
 	protected LuaObject(LuaState L, String globalName) {
 		synchronized (L) {
 			this.L = L;
@@ -75,12 +81,20 @@ public class LuaObject implements Serializable {
 		}
 	}
 
-	protected LuaObject(LuaObject parent, String name) throws LuaError {
+	/**
+	 * Creates a reference to an object inside another object
+	 * 
+	 * @param parent
+	 *            The Lua Table or Userdata that contains the Field.
+	 * @param name
+	 *            The name that index the field
+	 */
+	protected LuaObject(LuaObject parent, String name) throws LuaException {
 		synchronized (parent.getLuaState()) {
 			this.L = parent.getLuaState();
 
 			if (!parent.isTable() && !parent.isUserdata()) {
-				throw new LuaError("Object parent should be a table or userdata .");
+				throw new LuaException("Object parent should be a table or userdata .");
 			}
 
 			parent.push();
@@ -99,14 +113,14 @@ public class LuaObject implements Serializable {
 	 *            The Lua Table or Userdata that contains the Field.
 	 * @param name
 	 *            The name (number) that index the field
-	 * @throws LuaError
+	 * @throws LuaException
 	 *             When the parent object isn't a Table or Userdata
 	 */
-	protected LuaObject(LuaObject parent, Number name) throws LuaError {
+	protected LuaObject(LuaObject parent, Number name) throws LuaException {
 		synchronized (parent.getLuaState()) {
 			this.L = parent.getLuaState();
 			if (!parent.isTable() && !parent.isUserdata())
-				throw new LuaError("Object parent should be a table or userdata .");
+				throw new LuaException("Object parent should be a table or userdata .");
 
 			parent.push();
 			L.pushNumber(name.doubleValue());
@@ -124,15 +138,15 @@ public class LuaObject implements Serializable {
 	 *            The Lua Table or Userdata that contains the Field.
 	 * @param name
 	 *            The name (LuaObject) that index the field
-	 * @throws LuaError
+	 * @throws LuaException
 	 *             When the parent object isn't a Table or Userdata
 	 */
-	protected LuaObject(LuaObject parent, LuaObject name) throws LuaError {
+	protected LuaObject(LuaObject parent, LuaObject name) throws LuaException {
 		if (parent.getLuaState() != name.getLuaState())
-			throw new LuaError("LuaStates must be the same!");
+			throw new LuaException("LuaStates must be the same!");
 		synchronized (parent.getLuaState()) {
 			if (!parent.isTable() && !parent.isUserdata())
-				throw new LuaError("Object parent should be a table or userdata .");
+				throw new LuaException("Object parent should be a table or userdata .");
 
 			this.L = parent.getLuaState();
 
@@ -145,9 +159,17 @@ public class LuaObject implements Serializable {
 		}
 	}
 
+	/**
+	 * Creates a reference to an object in the given index of the stack
+	 * 
+	 * @param L
+	 * @param index
+	 *            of the object on the lua stack
+	 */
 	protected LuaObject(LuaState L, int index) {
 		synchronized (L) {
 			this.L = L;
+
 			registerValue(index);
 		}
 	}
@@ -159,6 +181,12 @@ public class LuaObject implements Serializable {
 		return L;
 	}
 
+	/**
+	 * Creates the reference to the object in the registry table
+	 * 
+	 * @param index
+	 *            of the object on the lua stack
+	 */
 	protected void registerValue(int index) {
 		synchronized (L) {
 			L.pushValue(index);
@@ -169,14 +197,14 @@ public class LuaObject implements Serializable {
 
 	@Override
 	protected void finalize() {
-		Log.i("luaObject", "finalize: "+ref+";"+toString());
+		//Log.i("luaObject", "finalize: "+ref+";"+toString());
 		try {
 			synchronized (L) {
 				if (L.getPointer() != 0)
 					L.LunRef(LuaState.LUA_REGISTRYINDEX, ref);
 			}
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 			System.err.println("Unable to release object " + ref);
 		}
 	}
@@ -190,22 +218,6 @@ public class LuaObject implements Serializable {
 
 	public void pop() {
 		L.pop(1);
-	}
-
-	public static LuaObject error(String str){
-		throw new LuaError(str);
-	}
-
-	public boolean checkboolean(){
-		return getBoolean();
-	}
-
-	public double checkdouble(){
-		return getNumber();
-	}
-
-	public LuaFunction checkfunction(){
-		return getFunction();
 	}
 	
 	public boolean isNil() {
@@ -362,7 +374,7 @@ public class LuaObject implements Serializable {
 	}
 	
 
-	public Object getObject() throws LuaError {
+	public Object getObject() throws LuaException {
 		synchronized (L) {
 			push();
 			Object obj = L.getObjectFromUserdata(-1);
@@ -371,45 +383,11 @@ public class LuaObject implements Serializable {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T getObject(Class<T> type) {
-		push();
-		T obj=null;
-		try {
-			obj=(T)LuaJavaAPI.compareTypes(L,type,-1);
-		}
-		catch (LuaError e) {}
-		L.pop(1);
-		return obj;
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T get(Object key, Class<T> type) {
-		// TODO: Implement this method
-		push();
-		T obj=null;
-		try {
-			L.pushObjectValue(key);
-			L.getTable(-2);
-			obj=(T)LuaJavaAPI.compareTypes(L,type,-1);
-			L.pop(1);
-		}
-		catch (LuaError e) {e.printStackTrace();}
-	    L.pop(1);
-		if(obj == null){
-			if(Number.class.isAssignableFrom(type))
-				obj=(T)Integer.valueOf(0);
-			if(Boolean.class.isAssignableFrom(type))
-				obj=(T)Boolean.valueOf(false);
-		}
-		return obj;
-	}
-
 	/**
 	 * If <code>this<code> is a table or userdata tries to set
 	 * a field value.
 	 */
-	public LuaObject getField(String field) throws LuaError {
+	public LuaObject getField(String field) throws LuaException {
 		return L.getLuaObject(this, field);
 	}
 
@@ -418,7 +396,7 @@ public class LuaObject implements Serializable {
 		try {
 			L.pushObjectValue(obj);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			L.pushNil();
 		}
 
@@ -426,7 +404,7 @@ public class LuaObject implements Serializable {
 		L.pop(1);
 	}
 
-	public LuaObject getI(long idx) throws LuaError {
+	public LuaObject getI(long idx) throws LuaException {
 		return L.getLuaObject(this, idx);
 	}
 
@@ -435,7 +413,7 @@ public class LuaObject implements Serializable {
 		try {
 			L.pushObjectValue(obj);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			L.pushNil();
 		}
 		L.setI(-2, idx);
@@ -450,16 +428,20 @@ public class LuaObject implements Serializable {
 	 * @param nres -
 	 *            Number of objects returned
 	 * @return Object[] - Returned Objects
-	 * @throws LuaError
+	 * @throws LuaException
 	 */
-	public Object[] call_aux(Object[] args, int nres) throws LuaError {
+	public Object[] call_aux(Object[] args, int nres) throws LuaException {
 		synchronized (L) {
 			if (!isFunction() && !isTable() && !isUserdata())
-				throw new LuaError("Invalid object. Not a function, table or userdata .");
+				throw new LuaException("Invalid object. Not a function, table or userdata .");
 
 			int top = L.getTop();
 			push();
 			int nargs;
+			L.getGlobal("debug");
+			L.getField(-1, "traceback");
+			L.remove(-2);
+			L.insert(-2);
 			if (args != null) {
 				nargs = args.length;
 				for (int i = 0; i < nargs; i++) {
@@ -470,7 +452,7 @@ public class LuaObject implements Serializable {
 			else
 				nargs = 0;
 
-			int err = L.pcall(nargs, nres, 0);
+			int err = L.pcall(nargs, nres, -2-nargs);
 
 			if (err != 0) {
 				String str;
@@ -494,13 +476,13 @@ public class LuaObject implements Serializable {
 					str = "Lua Error code " + err + ". " + str;
 				}
 
-				throw new LuaError(str);
+				throw new LuaException(str);
 			}
 
 			if (nres == LuaState.LUA_MULTRET)
 				nres = L.getTop() - top;
 			if (L.getTop() - top < nres) {
-				throw new LuaError("Invalid Number of Results .");
+				throw new LuaException("Invalid Number of Results .");
 			}
 
 			Object[] res = new Object[nres];
@@ -519,16 +501,16 @@ public class LuaObject implements Serializable {
 	 * @param args -
 	 *            Call arguments
 	 * @return Object - Returned Object
-	 * @throws LuaError
+	 * @throws LuaException
 	 */
-	public Object call(Object... args) throws LuaError {
+	public Object call(Object... args) throws LuaException {
 		return call_aux(args, 1)[0];
 	}
 
-	public LuaObject[] _call_aux(Object[] args, int nres) throws LuaError {
+	public LuaObject[] _call_aux(Object[] args, int nres) throws LuaException {
 		synchronized (L) {
 			if (!isFunction() && !isTable() && !isUserdata())
-				throw new LuaError("Invalid object. Not a function, table or userdata .");
+				throw new LuaException("Invalid object. Not a function, table or userdata .");
 
 			int top = L.getTop();
 			push();
@@ -567,13 +549,13 @@ public class LuaObject implements Serializable {
 					str = "Lua Error code " + err + ". " + str;
 				}
 
-				throw new LuaError(str);
+				throw new LuaException(str);
 			}
 
 			if (nres == LuaState.LUA_MULTRET)
 				nres = L.getTop() - top;
 			if (L.getTop() - top < nres) {
-				throw new LuaError("Invalid Number of Results .");
+				throw new LuaException("Invalid Number of Results .");
 			}
 
 			LuaObject[] res = new LuaObject[nres];
@@ -592,16 +574,16 @@ public class LuaObject implements Serializable {
 	 * @param args -
 	 *            Call arguments
 	 * @return Object - Returned Object
-	 * @throws LuaError
+	 * @throws LuaException
 	 */
-	public LuaObject _call(Object... args) throws LuaError {
+	public LuaObject _call(Object... args) throws LuaException {
 		return _call_aux(args, 1)[0];
 	}
 
-	public byte[] dump() throws LuaError {
+	public byte[] dump() throws LuaException {
 		synchronized (L) {
 			if (!isFunction())
-				throw new LuaError("Invalid object. Not a function .");
+				throw new LuaException("Invalid object. Not a function .");
 
 			push();
 			byte[] buf=L.dump(-1);
@@ -610,10 +592,10 @@ public class LuaObject implements Serializable {
 		}
 	}
 
-	public Object[] asArray() throws IllegalArgumentException, ArrayIndexOutOfBoundsException, LuaError {
+	public Object[] asArray() throws IllegalArgumentException, ArrayIndexOutOfBoundsException, LuaException {
 		synchronized (L) {
 			if (!isTable())
-				throw new LuaError("Invalid object. Not a table .");
+				throw new LuaException("Invalid object. Not a table .");
 			push();
 			int n = L.objLen(-1);
 			Object array = Array.newInstance(Object.class, n);
@@ -623,7 +605,7 @@ public class LuaObject implements Serializable {
 				try {
 					Array.set(array, i - 1, L.toJavaObject(-1));
 				}
-				catch (LuaError e) {}
+				catch (LuaException e) {}
 				L.pop(1);
 			}
 			L.pop(1);
@@ -631,11 +613,11 @@ public class LuaObject implements Serializable {
 		}
 	}
 
-	public Map asMap(LuaState L, Class<?> clazz, int idx) throws LuaError {
+	public Map asMap(LuaState L, Class<?> clazz, int idx) throws LuaException {
 		// TODO: Implement this method
 		synchronized (L) {
 			if (!isTable())
-				throw new LuaError("Invalid object. Not a table .");
+				throw new LuaException("Invalid object. Not a table .");
 			HashMap<Object,Object> map = new HashMap<Object, Object>();
 			push();
 			L.pushNil();
@@ -643,7 +625,7 @@ public class LuaObject implements Serializable {
 				try {
 					map.put(L.toJavaObject(-2), L.toJavaObject(-1));
 				}
-				catch (LuaError e) {}
+				catch (LuaException e) {}
 				L.pop(1);
 			}
 			L.pop(1);
@@ -657,29 +639,25 @@ public class LuaObject implements Serializable {
 				if (isNil())
 					return "nil";
 				else if (isBoolean())
-					return "boolean->"+String.valueOf(getBoolean());
+					return String.valueOf(getBoolean());
 				else if (isNumber())
-					return "number->"+String.valueOf(getNumber());
+					return String.valueOf(getNumber());
 				else if (isString())
-					return "string->"+getString();
+					return getString();
 				else if (isFunction())
 					return "Lua Function";
 				else if (isJavaObject())
-					return "JavaObject->"+getObject().toString();
-				else if (isUserdata()) {
-					return "Userdata->" + getObject().toString();
-				}
-				else if (isTable()) {
-					return "LuaTable";
-				}
-				else if (isJavaFunction()) {
+					return getObject().toString();
+				else if (isUserdata())
+					return "Userdata";
+				else if (isTable())
+					return "Lua Table";
+				else if (isJavaFunction())
 					return "Java Function";
-				}
-				else {
+				else
 					return null;
-				}
 			}
-			catch (LuaError e) {
+			catch (LuaException e) {
 				return null;
 			}
 		}
@@ -691,10 +669,10 @@ public class LuaObject implements Serializable {
 	 * @param implem
 	 *            Interfaces that are implemented, separated by <code>,</code>
 	 */
-	public Object createProxy(String implem) throws ClassNotFoundException, LuaError {
+	public Object createProxy(String implem) throws ClassNotFoundException, LuaException {
 		synchronized (L) {
 			if (!isTable())
-				throw new LuaError("Invalid Object. Must be Table.");
+				throw new LuaException("Invalid Object. Must be Table.");
 
 			StringTokenizer st = new StringTokenizer(implem, ",");
 			Class[] interfaces = new Class[st.countTokens()];
@@ -707,15 +685,15 @@ public class LuaObject implements Serializable {
 		}
 	}
 
-	public Object createProxy(Class implem) throws LuaError {
+	public Object createProxy(Class implem) throws LuaException {
 		synchronized (L) {
 			if (!isTable() && !isFunction())
-				throw new LuaError("Invalid Object. Must be Table or Function.");
+				throw new LuaException("Invalid Object. Must be Table or Function.");
 
 			if(isFunction() && implem.getMethods().length!=1)
-				throw new LuaError("Invalid Object. Must be a interface Method of Function.");
+				throw new LuaException("Invalid Object. Must be a interface Method of Function.");
             if(isTable()&&getTable().isList()){
-	            throw new LuaError("Invalid Object. Must be Table is Not Array.");
+	            throw new LuaException("Invalid Object. Must be Table is Not Array.");
             }
 			Class[] interfaces = new Class[]{implem};
 

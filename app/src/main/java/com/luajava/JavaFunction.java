@@ -46,7 +46,7 @@ public abstract class JavaFunction
 	 * of the function must be pushed onto the stack.
 	 * @return The number of values pushed onto the stack.
 	 */
-	public abstract int execute() throws LuaError;
+	public abstract int execute() throws LuaException;
 	
 	/**
 	 * Constructor that receives a LuaState.
@@ -75,7 +75,7 @@ public abstract class JavaFunction
 	 * global variable the JavaFunction specified.
 	 * @param name name of the function.
 	 */
-	public void register(String name) throws LuaError
+	public void register(String name) throws LuaException
 	{
 	  synchronized (L)
 	  {

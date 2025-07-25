@@ -23,7 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaFunction;
 
 import java.util.ArrayList;
@@ -438,7 +438,7 @@ public class ArrayListAdapter<T> extends BaseAdapter implements Filterable {
      * <p>Sets the layout resource to create the drop down views.</p>
      *
      * @param resource the layout resource defining the drop down views
-     * @see #getDropDownView(int, android.view.View, android.view.ViewGroup)
+     * @see #getDropDownView(int, View, ViewGroup)
      */
     public void setDropDownViewResource(int resource) {
         this.mDropDownResource = resource;
@@ -510,7 +510,7 @@ public class ArrayListAdapter<T> extends BaseAdapter implements Filterable {
                 final ArrayList<T> newValues = new ArrayList<T>();
                 try {
                     mLuaFilter.call(new ArrayList<>(mOriginalValues), newValues, prefix);
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                 }
                 results.values = newValues;

@@ -70,7 +70,13 @@ public class SsaToRop {
         return new SsaToRop(ssaMeth, minimizeRegisters).convert();
     }
 
-
+    /**
+     * Constructs an instance.
+     *
+     * @param ssaMeth {@code non-null;} method to process
+     * @param minimizeRegisters {@code true} if the converter should
+     * attempt to minimize the rop-form register count
+     */
     private SsaToRop(SsaMethod ssaMethod, boolean minimizeRegisters) {
         this.minimizeRegisters = minimizeRegisters;
         this.ssaMeth = ssaMethod;

@@ -14,7 +14,7 @@ public class LuaStack
 		return luaStack.get(name);
 	}
 	
-	public static Object call(String name,String func,Object[] arg) throws LuaError{
+	public static Object call(String name,String func,Object[] arg) throws LuaException{
 		return new LuaFunction(get(name),func).call(arg);
 	}
 	

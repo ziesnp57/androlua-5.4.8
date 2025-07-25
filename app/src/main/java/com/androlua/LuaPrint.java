@@ -2,22 +2,21 @@ package com.androlua;
 
 import com.luajava.*;
 
-import java.util.Map;
-
 public class LuaPrint extends JavaFunction {
 
     private LuaState L;
     private LuaContext mLuaContext;
     private StringBuilder output = new StringBuilder();
 
-    public LuaPrint(LuaContext luaContext, LuaState L) {
+    public
+    LuaPrint(LuaContext luaContext, LuaState L) {
         super(L);
         this.L = L;
         mLuaContext = luaContext;
     }
 
     @Override
-    public int execute() throws LuaError {
+    public int execute() throws LuaException {
         if (L.getTop() < 2) {
             mLuaContext.sendMsg("");
             return 0;
@@ -28,15 +27,12 @@ public class LuaPrint extends JavaFunction {
             String stype = L.typeName(type);
             if (stype.equals("userdata")) {
                 Object obj = L.toJavaObject(i);
-                if (obj != null) {
+                if (obj != null)
                     val = obj.toString();
-                }
             } else if (stype.equals("boolean")) {
                 val = L.toBoolean(i) ? "true" : "false";
-            } else if (stype.equals("table")){
-                val = ((LuaTable)L.toJavaObject(i)).tostring();
             } else {
-                val = L.toString(i);
+                val = L.LtoString(i);
             }
             if (val == null)
                 val = stype;

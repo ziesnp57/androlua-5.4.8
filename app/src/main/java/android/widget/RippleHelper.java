@@ -30,7 +30,7 @@ public class RippleHelper extends Drawable implements View.OnTouchListener {
     private boolean mEnabled;
     private int mRadius;
     private TimerX mTimer;
-    private RippleHelper.task mTask;
+    private task mTask;
     private Paint mPaint2;
     private float mX;
     private float mY;

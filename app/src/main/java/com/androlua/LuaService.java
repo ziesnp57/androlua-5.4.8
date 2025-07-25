@@ -20,7 +20,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.luajava.JavaFunction;
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaObject;
 import com.luajava.LuaState;
 import com.luajava.LuaStateFactory;
@@ -47,7 +47,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 	private LuaDexLoader mLuaDexLoader;
 	private ArrayList<LuaGcable> gclist=new ArrayList<LuaGcable>();
 	private String luaLpath;
-	private LuaService.MainHandler handler;
+	private MainHandler handler;
 	private String luaMdDir;
 	private LuaState L;
 	private String luaPath;
@@ -84,7 +84,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		return mLuaDexLoader.getClassLoaders();
 	}
 
-	public DexClassLoader loadDex(String path) throws LuaError {
+	public DexClassLoader loadDex(String path) throws LuaException {
 		return mLuaDexLoader.loadDex(path);
 	}
 
@@ -344,105 +344,105 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 	}
 
 
-	public LuaAsyncTask newTask(LuaObject func) throws LuaError {
+	public LuaAsyncTask newTask(LuaObject func) throws LuaException {
 		return newTask(func, null, null);
 	}
 
-	public LuaAsyncTask newTask(LuaObject func, LuaObject callback) throws LuaError {
+	public LuaAsyncTask newTask(LuaObject func, LuaObject callback) throws LuaException {
 		return newTask(func, null, callback);
 	}
 
-	public LuaAsyncTask newTask(LuaObject func, LuaObject update, LuaObject callback) throws LuaError {
+	public LuaAsyncTask newTask(LuaObject func, LuaObject update, LuaObject callback) throws LuaException {
 		return new LuaAsyncTask(this, func, update, callback);
 	}
 
-	public LuaThread newThread(LuaObject func) throws LuaError {
+	public LuaThread newThread(LuaObject func) throws LuaException {
 		return newThread(func, null);
 	}
 
-	public LuaThread newThread(LuaObject func, Object[] arg) throws LuaError {
+	public LuaThread newThread(LuaObject func, Object[] arg) throws LuaException {
 		LuaThread thread = new LuaThread(this, func, true, arg);
 		return thread;
 	}
 
-	public LuaTimer newTimer(LuaObject func) throws LuaError {
+	public LuaTimer newTimer(LuaObject func) throws LuaException {
 		return newTimer(func, null);
 	}
 
-	public LuaTimer newTimer(LuaObject func, Object[] arg) throws LuaError {
+	public LuaTimer newTimer(LuaObject func, Object[] arg) throws LuaException {
 		return new LuaTimer(this, func, arg);
 	}
 
-	public LuaAsyncTask task(long delay,LuaObject func) throws LuaError {
+	public LuaAsyncTask task(long delay,LuaObject func) throws LuaException {
 		return task(delay,null,null);
 	}
 
-	public LuaAsyncTask task(long delay, Object[] arg, LuaObject func) throws LuaError {
+	public LuaAsyncTask task(long delay, Object[] arg, LuaObject func) throws LuaException {
 		LuaAsyncTask task = new LuaAsyncTask(this, delay, func);
 		task.execute(arg);
 		return task;
 	}
 
-	public LuaAsyncTask task(LuaObject func) throws LuaError {
+	public LuaAsyncTask task(LuaObject func) throws LuaException {
 		return task(func,null,null,null);
 	}
 
-	public LuaAsyncTask task(LuaObject func, Object[] arg) throws LuaError {
+	public LuaAsyncTask task(LuaObject func, Object[] arg) throws LuaException {
 		return task(func, arg,null,null);
 	}
 
-	public LuaAsyncTask task(LuaObject func, Object[] arg, LuaObject callback) throws LuaError {
+	public LuaAsyncTask task(LuaObject func, Object[] arg, LuaObject callback) throws LuaException {
 		return task(func,null,null,callback);
 	}
 
-	public LuaAsyncTask task(LuaObject func,LuaObject update, LuaObject callback) throws LuaError {
+	public LuaAsyncTask task(LuaObject func,LuaObject update, LuaObject callback) throws LuaException {
 		return task(func,null,update,callback);
 	}
 
-	public LuaAsyncTask task(LuaObject func, Object[] arg, LuaObject update, LuaObject callback) throws LuaError {
+	public LuaAsyncTask task(LuaObject func, Object[] arg, LuaObject update, LuaObject callback) throws LuaException {
 		LuaAsyncTask task = new LuaAsyncTask(this, func, update, callback);
 		task.execute(arg);
 		return task;
 	}
 
-	public LuaThread thread(LuaObject func) throws LuaError {
+	public LuaThread thread(LuaObject func) throws LuaException {
 		LuaThread thread = newThread(func, null);
 		thread.start();
 		return thread;
 	}
 
-	public LuaThread thread(LuaObject func, Object[] arg) throws LuaError {
+	public LuaThread thread(LuaObject func, Object[] arg) throws LuaException {
 		LuaThread thread = new LuaThread(this, func, true, arg);
 		thread.start();
 		return thread;
 	}
 
-	public LuaTimer timer(LuaObject func, long period) throws LuaError {
+	public LuaTimer timer(LuaObject func, long period) throws LuaException {
 		return timer(func, 0, period, null);
 	}
 
-	public LuaTimer timer(LuaObject func, long period, Object[] arg) throws LuaError {
+	public LuaTimer timer(LuaObject func, long period, Object[] arg) throws LuaException {
 		return timer(func, 0, period, arg);
 	}
 
-	public LuaTimer timer(LuaObject func, long delay, long period) throws LuaError {
+	public LuaTimer timer(LuaObject func, long delay, long period) throws LuaException {
 		return timer(func, delay, period, null);
 	}
 
-	public LuaTimer timer(LuaObject func, long delay, long period, Object[] arg) throws LuaError {
+	public LuaTimer timer(LuaObject func, long delay, long period, Object[] arg) throws LuaException {
 		LuaTimer timer = new LuaTimer(this, func, arg);
 		timer.start(delay, period);
 		return timer;
 	}
 
-	public Ticker ticker(final LuaObject func, long period) throws LuaError {
+	public Ticker ticker(final LuaObject func, long period) throws LuaException {
 		Ticker timer = new Ticker();
 		timer.setOnTickListener(new Ticker.OnTickListener() {
 			@Override
 			public void onTick() {
 				try {
 					func.call();
-				} catch (LuaError e) {
+				} catch (LuaException e) {
 					e.printStackTrace();
 					sendError("onTick",e);
 				}
@@ -466,7 +466,12 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		return LuaApplication.getInstance().getGlobalData();
 	}
 
-	@Override
+    @Override
+    public Object getSharedData() {
+        return LuaApplication.getInstance().getSharedData();
+    }
+
+    @Override
 	public Object getSharedData(String key) {
 		return LuaApplication.getInstance().getSharedData(key);
 	}
@@ -514,7 +519,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		JavaFunction print=new JavaFunction(L) {
 
 			@Override
-			public int execute() throws LuaError {
+			public int execute() throws LuaException {
 				if (L.getTop() < 2) {
 					sendMsg("");
 					return 0;
@@ -553,7 +558,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		print.register("print");
 		JavaFunction set = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError {
+			public int execute() throws LuaException {
 				LuaThread thread = (LuaThread) L.toJavaObject(2);
 
 				thread.set(L.toString(3), L.toJavaObject(4));
@@ -564,7 +569,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 
 		JavaFunction call = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError {
+			public int execute() throws LuaException {
 				LuaThread thread = (LuaThread) L.toJavaObject(2);
 
 				int top=L.getTop();
@@ -616,9 +621,9 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 					return L.toJavaObject(-1);
 				}
 			}
-			throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+			throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			sendMsg(e.getMessage());
 		}
 
@@ -648,7 +653,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 					return L.toJavaObject(-1);
 				}
 			}
-			throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+			throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 		}
 		catch (Exception e) {
 			sendMsg(e.getMessage());
@@ -680,10 +685,10 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 					if (ok == 0) {
 						return L.toJavaObject(-1);
 					}
-					throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+					throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 				}
 			}
-			catch (LuaError e) {
+			catch (LuaException e) {
 				sendMsg(funcName + " " + e.getMessage());
 			}
 		}
@@ -716,9 +721,9 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 					return L.toJavaObject(-1);
 				}
 			}
-			throw new LuaError(errorReason(ok) + ": " + L.toString(-1)) ;
+			throw new LuaException(errorReason(ok) + ": " + L.toString(-1)) ;
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			sendMsg(e.getMessage());
 		}
 		return null;
@@ -768,7 +773,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		runFunc("onError", title, msg);
 	}
 
-	public Object loadLib(String name) throws LuaError {
+	public Object loadLib(String name) throws LuaException {
 		int i=name.indexOf(".");
 		String fn = name;
 		if (i > 0)
@@ -777,7 +782,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		if (!f.exists()) {
 			f = new File(luaDir + "/lib" + fn + ".so");
 			if (!f.exists())
-				throw new LuaError("can not find lib " + name);
+				throw new LuaException("can not find lib " + name);
 			copyFile(luaDir + "/lib" + fn + ".so", libDir + "/lib" + fn + ".so");
 		}
 		LuaObject require=L.getLuaObject("require");
@@ -839,7 +844,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 			L.pushObjectValue(value);
 			L.setGlobal(key);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			sendMsg(e.getMessage());
 		}
 	}
@@ -860,7 +865,7 @@ public class LuaService extends Service implements LuaContext,LuaBroadcastReceiv
 		push(1, key, new Object[]{ value});
 	}
 
-	public Object get(String key) throws LuaError {
+	public Object get(String key) throws LuaException {
 		L.getGlobal(key);
 		return L.toJavaObject(-1);
 	}

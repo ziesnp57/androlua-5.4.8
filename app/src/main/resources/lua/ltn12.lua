@@ -261,7 +261,7 @@ function sink.chain(f, snk, ...)
     if ... then
         local args = { f, snk, ... }
         snk = table.remove(args, #args)
-        f = filter.chain(table.unpack(args))
+        f = filter.chain(unpack(args))
     end
     base.assert(f and snk)
     return function(chunk, err)

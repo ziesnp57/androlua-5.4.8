@@ -100,10 +100,10 @@ public abstract class Language {
         _users.clear();
     }
 
-    public void addUserWord(String name,int type) {
+    public void addUserWord(String name) {
         if (!_ueserCache.contains(name) && !_names.containsKey(name))
             _ueserCache.add(name);
-        _users.put(name, type);
+        _users.put(name, Lexer.NAME);
     }
 
     protected void setOperators(char[] operators) {

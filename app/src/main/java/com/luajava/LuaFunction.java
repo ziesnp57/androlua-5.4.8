@@ -1,9 +1,9 @@
 package com.luajava;
 
-public class LuaFunction <T extends java.lang.Object>extends LuaObject implements LuaMetaTable {
+public class LuaFunction <T extends Object>extends LuaObject implements LuaMetaTable {
 
 	@Override
-	public T __call(Object[] arg) throws LuaError {
+	public T __call(Object[] arg) throws LuaException {
 		// TODO: Implement this method
 		return (T)super.call(arg);
 	}
@@ -20,7 +20,7 @@ public class LuaFunction <T extends java.lang.Object>extends LuaObject implement
 	}
 
 	@Override
-	public T call(Object...args) throws LuaError {
+	public T call(Object...args) throws LuaException {
 		// TODO: Implement this method
 		Object ret = super.call(args);
 		return (T)ret;

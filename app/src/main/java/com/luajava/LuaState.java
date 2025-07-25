@@ -25,11 +25,16 @@
 package com.luajava;
 
 
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * LuaState if the main class of LuaJava for the Java developer.
@@ -74,7 +79,7 @@ public class LuaState {
      */
     final public static int LUA_YIELD = 1;
     /*
-	 * error codes for `lua_load' and `lua_pcall'
+     * error codes for `lua_load' and `lua_pcall'
 	 */
     /**
      * a runtime error.
@@ -138,15 +143,16 @@ public class LuaState {
         LuaStateFactory.removeLuaState(luaState);
         _close(luaState);
         this.luaState = 0;
+        javaObjectGcList.clear();
+        javaObjectMap.clear();
     }
 
     @Override
     protected void finalize() {
-        Log.i("luaState", "finalize: "+luaState);
+        Log.i("luaState", "finalize: " + luaState);
         try {
-           close();
-        }
-        catch (Exception e) {
+            close();
+        } catch (Exception e) {
             System.err.println("Unable to release luaState " + luaState);
         }
     }
@@ -238,7 +244,7 @@ public class LuaState {
 
     private synchronized native int _toBoolean(long ptr, int idx);
 
-    private synchronized native String _toString(long ptr, int idx);
+    private synchronized native byte[] _toString(long ptr, int idx);
 
     private synchronized native byte[] _toBuffer(long ptr, int idx);
 
@@ -292,8 +298,6 @@ public class LuaState {
     private synchronized native int _setMetaTable(long ptr, int idx);
 
     private synchronized native void _setUserValue(long ptr, int idx);
-
-    private synchronized native long _topointer(long ptr, int idx);
 
     private synchronized native void _call(long ptr, int nArgs, int nResults);
 
@@ -403,12 +407,13 @@ public class LuaState {
 
     private synchronized native String _Lgsub(long ptr, String s, String p, String r);
 
+    private synchronized native byte[] _LtoString(long ptr, int idx);
+
     private synchronized native String _getUpValue(long ptr, int funcindex, int n);
 
     private synchronized native String _setUpValue(long ptr, int funcindex, int n);
 
     private synchronized native byte[] _dump(long ptr, int funcindex);
-
     private synchronized native void _openBase(long ptr);
 
     private synchronized native void _openTable(long ptr);
@@ -436,9 +441,7 @@ public class LuaState {
     }
 
     // STACK MANIPULATION
-    public long topointer(int idx){
-        return _topointer(luaState,idx);
-    }
+
     public int getTop() {
         return _getTop(luaState);
     }
@@ -566,7 +569,7 @@ public class LuaState {
     }
 
     public String toString(int idx) {
-        return _toString(luaState, idx);
+        return new String(_toString(luaState, idx));
     }
 
     public byte[] toBuffer(int idx) {
@@ -697,7 +700,6 @@ public class LuaState {
 
     // returns 0 if ok of one of the error codes defined
     public int pcall(int nArgs, int nResults, int errFunc) {
-
         return _pcall(luaState, nArgs, nResults, errFunc);
     }
 
@@ -718,6 +720,12 @@ public class LuaState {
     }
 
     public int gc(int what, int data) {
+        for (Integer i : javaObjectGcList) {
+            javaObjectMap.remove(i);
+            //Log.i("lua", "gc: "+i+";"+javaObjectMap.remove(i));
+        }
+        //Log.i("lua", "gc:2 "+javaObjectMap.size()+";"+javaObjectMap);
+        javaObjectGcList.clear();
         return _gc(luaState, what, data);
     }
 
@@ -831,6 +839,10 @@ public class LuaState {
         return _Lgsub(luaState, s, p, r);
     }
 
+    public String LtoString(int idx) {
+        return new String(_LtoString(luaState, idx));
+    }
+
     public String getUpValue(int funcindex, int n) {
         return _getUpValue(luaState, funcindex, n);
     }
@@ -919,7 +931,7 @@ public class LuaState {
      * @param idx index of the lua stack
      * @return Object
      */
-    private synchronized native Object _getObjectFromUserdata(long L, int idx) throws LuaError;
+    private synchronized native int _getObjectFromUserdata(long L, int idx) throws LuaException;
 
     /**
      * Returns whether a userdata contains a Java Object
@@ -934,9 +946,9 @@ public class LuaState {
      * Pushes a Java Object into the state stack
      *
      * @param L
-     * @param obj
+     * @param idx
      */
-    private synchronized native void _pushJavaObject(long L, Object obj);
+    private synchronized native void _pushJavaObject(long L, String name, int idx, boolean isclass);
 
     /**
      * Pushes a JavaFunction into the state stack
@@ -944,7 +956,7 @@ public class LuaState {
      * @param L
      * @param func
      */
-    private synchronized native void _pushJavaFunction(long L, JavaFunction func) throws LuaError;
+    private synchronized native void _pushJavaFunction(long L, JavaFunction func) throws LuaException;
 
     /**
      * Returns whether a userdata contains a Java Function
@@ -958,6 +970,7 @@ public class LuaState {
     public void openLuajava() {
         _openLuajava(luaState);
         pushPrimitive();
+        Pattern.compile("/(?:^|\\s)[\\u0780-\\u07BF]+?(?:\\s|$)/g");
     }
 
     /**
@@ -965,10 +978,10 @@ public class LuaState {
      *
      * @param idx index of the lua stack
      * @return Object
-     * @throws LuaError if the lua object does not represent a java object.
+     * @throws LuaException if the lua object does not represent a java object.
      */
-    public Object getObjectFromUserdata(int idx) throws LuaError {
-        return _getObjectFromUserdata(luaState, idx);
+    public Object getObjectFromUserdata(int idx) throws LuaException {
+        return getJavaObject(_getObjectFromUserdata(luaState, idx));
     }
 
     /**
@@ -988,9 +1001,53 @@ public class LuaState {
      *
      * @param obj Object to be pushed into lua
      */
+    private int sIdx = 0;
+    private static final AtomicInteger ssIdx = new AtomicInteger();
+    @SuppressLint("UseSparseArrays")
+    private final HashMap<Integer, Object> javaObjectMap = new HashMap<>();
+    private final ArrayList<Integer> javaObjectGcList = new ArrayList<>();
+
+    public void pushJavaObject(int idx, Object obj) {
+        javaObjectMap.put(idx, obj);
+    }
+
+    public Object getJavaObject(int i) {
+        return javaObjectMap.get(i);
+    }
+
+    public void removeJavaObject(int i) {
+        javaObjectGcList.add(i);
+        //javaObjectMap.remove(i);
+    }
+
     public void pushJavaObject(Object obj) {
-        LuaJavaAPI.pushJavaObject();
-        _pushJavaObject(luaState, obj);
+
+        if (obj == null) {
+            pushNil();
+            return;
+        }
+        int idx = sIdx++;
+        /*int idx = 0;
+        synchronized (ssIdx) {
+            idx = ssIdx.addAndGet(1);
+        }*/
+        pushJavaObject(idx, obj);
+
+        Class clazz;
+        if (obj instanceof Class)
+            clazz = (Class) obj;
+        else
+            clazz = obj.getClass();
+
+        try {
+            if (obj instanceof Class)
+                _pushJavaObject(luaState, clazz.getName(), idx, true);
+            else
+                _pushJavaObject(luaState, clazz.getName(), idx, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -998,7 +1055,7 @@ public class LuaState {
      *
      * @param func
      */
-    public void pushJavaFunction(JavaFunction func) throws LuaError {
+    public void pushJavaFunction(JavaFunction func) throws LuaException {
         _pushJavaFunction(luaState, func);
     }
 
@@ -1019,7 +1076,7 @@ public class LuaState {
      *
      * @param obj
      */
-    public void pushObjectValue(Object obj) throws LuaError {
+    public void pushObjectValue(Object obj) throws LuaException {
         if (obj == null) {
             pushNil();
         } else if (obj instanceof Boolean) {
@@ -1064,7 +1121,7 @@ public class LuaState {
      * @param idx Index in the Lua Stack
      * @return Java object equivalent to the Lua one
      */
-    public synchronized Object toJavaObject(int idx) throws LuaError {
+    public synchronized Object toJavaObject(int idx) throws LuaException {
         Object obj = null;
 
         if (isBoolean(idx)) {
@@ -1115,10 +1172,10 @@ public class LuaState {
      * @param parent The Lua Table or Userdata that contains the Field.
      * @param name   The name that index the field
      * @return LuaObject
-     * @throws LuaError if parent is not a table or userdata
+     * @throws LuaException if parent is not a table or userdata
      */
     public LuaObject getLuaObject(LuaObject parent, String name)
-            throws LuaError {
+            throws LuaException {
         return new LuaObject(parent, name);
     }
 
@@ -1128,10 +1185,10 @@ public class LuaState {
      * @param parent The Lua Table or Userdata that contains the Field.
      * @param name   The name (number) that index the field
      * @return LuaObject
-     * @throws LuaError When the parent object isn't a Table or Userdata
+     * @throws LuaException When the parent object isn't a Table or Userdata
      */
     public LuaObject getLuaObject(LuaObject parent, Number name)
-            throws LuaError {
+            throws LuaException {
         return new LuaObject(parent, name);
     }
 
@@ -1141,13 +1198,13 @@ public class LuaState {
      * @param parent The Lua Table or Userdata that contains the Field.
      * @param name   The name (LuaObject) that index the field
      * @return LuaObject
-     * @throws LuaError When the parent object isn't a Table or Userdata
+     * @throws LuaException When the parent object isn't a Table or Userdata
      */
     public LuaObject getLuaObject(LuaObject parent, LuaObject name)
-            throws LuaError {
+            throws LuaException {
         if (parent.getLuaState().getPointer() != luaState ||
                 parent.getLuaState().getPointer() != name.getLuaState().getPointer())
-            throw new LuaError("Object must have the same LuaState as the parent!");
+            throw new LuaException("Object must have the same LuaState as the parent!");
 
         return new LuaObject(parent, name);
     }
@@ -1196,19 +1253,21 @@ public class LuaState {
             }
         } else if (Number.class.isAssignableFrom(retType)) {
             // Checks all possibilities of number types
-            if (retType.isAssignableFrom(Long.class)) {
-                return new Long(db.longValue());
-            } else if (retType.isAssignableFrom(Integer.class)) {
+            if (Integer.class.isAssignableFrom(retType)) {
                 return new Integer(db.intValue());
-            } else if (retType.isAssignableFrom(Float.class)) {
+            } else if (Long.class.isAssignableFrom(retType)) {
+                return new Long(db.longValue());
+            } else if (Float.class.isAssignableFrom(retType)) {
                 return new Float(db.floatValue());
-            } else if (retType.isAssignableFrom(Double.class)) {
+            } else if (Double.class.isAssignableFrom(retType)) {
                 return db;
-            } else if (retType.isAssignableFrom(Byte.class)) {
+            } else if (Byte.class.isAssignableFrom(retType)) {
                 return new Byte(db.byteValue());
-            } else if (retType.isAssignableFrom(Short.class)) {
+            } else if (Short.class.isAssignableFrom(retType)) {
                 return new Short(db.shortValue());
             }
+        } else if (retType==Object.class) {
+            return db;
         }
 
         // if all checks fail, return null
@@ -1233,20 +1292,20 @@ public class LuaState {
             }
         } else if (Number.class.isAssignableFrom(retType)) {
             // Checks all possibilities of number types
-            if (retType.isAssignableFrom(Long.class)) {
-                return new Long(lg.longValue());
-            } else if (retType.isAssignableFrom(Integer.class)) {
+            if (Integer.class.isAssignableFrom(retType)) {
                 return new Integer(lg.intValue());
-            } else if (retType.isAssignableFrom(Float.class)) {
+            } else if (Long.class.isAssignableFrom(retType)) {
+                return new Long(lg.longValue());
+            } else if (Float.class.isAssignableFrom(retType)) {
                 return new Float(lg.floatValue());
-            } else if (retType.isAssignableFrom(Double.class)) {
+            } else if (Double.class.isAssignableFrom(retType)) {
                 return lg;
-            } else if (retType.isAssignableFrom(Byte.class)) {
+            } else if (Byte.class.isAssignableFrom(retType)) {
                 return new Byte(lg.byteValue());
-            } else if (retType.isAssignableFrom(Short.class)) {
+            } else if (Short.class.isAssignableFrom(retType)) {
                 return new Short(lg.shortValue());
             }
-        } else if(retType instanceof java.lang.Object){
+        } else if (retType==Object.class) {
             return lg;
         }
 
@@ -1279,47 +1338,11 @@ public class LuaState {
             return obj.getFunction();
         return null;
     }
+
     public LuaFunction getFunction(int idx) {
         LuaObject obj = getLuaObject(idx);
         if (obj.isFunction())
             return obj.getFunction();
         return null;
     }
-
-    public LuaObject arg(int i){
-        return getLuaObject(i+1);
-    }
-
-    public LuaObject arg1(){
-        return arg(1);
-    }
-
-    public int narg(){
-        return getTop();
-    }
-
-    public boolean optboolean(int idx,boolean z){
-        LuaObject v = getLuaObject(idx+1);
-        if(v.isBoolean()){
-            return v.getBoolean();
-        }
-        return z;
-    }
-
-    public double optdouble(int idx,double d){
-        LuaObject v = getLuaObject(idx+1);
-        if(v.isBoolean()){
-            return v.getNumber();
-        }
-        return d;
-    }
-
-    public LuaFunction optfunction(int idx,LuaFunction f){
-        LuaObject v = getLuaObject(idx+1);
-        if(v.isFunction()){
-            return v.getFunction();
-        }
-        return f;
-    }
-
 }

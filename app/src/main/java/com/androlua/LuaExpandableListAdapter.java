@@ -48,12 +48,12 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 	};
 	private HashMap<String,Boolean> loaded=new HashMap<String,Boolean>();
 
-	public LuaExpandableListAdapter(LuaContext context,  LuaTable groupLayout, LuaTable childLayout) throws LuaError {
+	public LuaExpandableListAdapter(LuaContext context,  LuaTable groupLayout, LuaTable childLayout) throws LuaException {
 		this(context,null,null,groupLayout,childLayout);
 	}
 	
 	
-	public LuaExpandableListAdapter(LuaContext context, LuaTable<Integer,LuaTable<String,Object>> groupData, LuaTable<Integer,LuaTable<Integer,LuaTable<String,Object>>> childData, LuaTable groupLayout, LuaTable childLayout) throws LuaError {
+	public LuaExpandableListAdapter(LuaContext context, LuaTable<Integer,LuaTable<String,Object>> groupData, LuaTable<Integer,LuaTable<Integer,LuaTable<String,Object>>> childData, LuaTable groupLayout, LuaTable childLayout) throws LuaException {
 		mContext = context;
 		L = context.getLuaState();
 		mRes=mContext.getContext().getResources();
@@ -191,7 +191,7 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 				view = loadlayout.call(mGroupLayout, holder, AbsListView.class);
 				view.setTag(holder);
 			}
-			catch (LuaError e) {
+			catch (LuaException e) {
 				return new View(mContext.getContext());
 			}
 		}
@@ -258,7 +258,7 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 				view = loadlayout.call(mChildLayout, holder, AbsListView.class);
 				view.setTag(holder);
 			}
-			catch (LuaError e) {
+			catch (LuaException e) {
 				return new View(mContext.getContext());
 			}
 		}
@@ -363,7 +363,7 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 		}
 	}
 
-	private int javaSetter(Object obj, String methodName, Object value) throws LuaError {
+	private int javaSetter(Object obj, String methodName, Object value) throws LuaException {
 
 		if (methodName.length() > 2 && methodName.substring(0, 2).equals("on") && value instanceof LuaFunction)
 			return javaSetListener(obj, methodName, value);
@@ -371,7 +371,7 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 		return javaSetMethod(obj, methodName, value);
 	}
 
-	private int javaSetListener(Object obj, String methodName, Object value) throws LuaError {
+	private int javaSetListener(Object obj, String methodName, Object value) throws LuaException {
 		String name="setOn" + methodName.substring(2) + "Listener";
 		ArrayList<Method> methods = LuaJavaAPI.getMethod(obj.getClass(), name, false);
 		for (Method m:methods) {
@@ -387,14 +387,14 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 					return 1;
 				}
 				catch (Exception e) {
-					throw new LuaError(e);
+					throw new LuaException(e);
 				}
 			}
 		}
 		return 0;
 	}
 
-	private int javaSetMethod(Object obj, String methodName, Object value) throws LuaError {
+	private int javaSetMethod(Object obj, String methodName, Object value) throws LuaException {
 		if(Character.isLowerCase(methodName.charAt(0))){
 			methodName=Character.toUpperCase(methodName.charAt(0))+methodName.substring(1);
 		}
@@ -447,9 +447,9 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 			}
 		}
 		if (buf.length() > 0)
-			throw new LuaError("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
+			throw new LuaException("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
 		else
-			throw new LuaError("Invalid setter " + methodName + " is not a method.\n");
+			throw new LuaException("Invalid setter " + methodName + " is not a method.\n");
 
 	}
 
@@ -515,7 +515,7 @@ public class LuaExpandableListAdapter extends BaseExpandableListAdapter {
 				mHandler.sendEmptyMessage(0);
 			}
 			catch (IOException e) {
-				mContext.sendError("AsyncLoader",e);
+				mContext.sendError("AsyncLoader Error",e);
 			}
 
 		}

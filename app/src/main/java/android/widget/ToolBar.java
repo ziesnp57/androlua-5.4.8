@@ -42,7 +42,7 @@ public class ToolBar extends LinearLayout {
 		// TODO: Implement this method
 		dm = context.getResources().getDisplayMetrics();
 		mHeight = dp(48);
-		LinearLayout.LayoutParams lp = new LayoutParams(mHeight, mHeight);
+		LayoutParams lp = new LayoutParams(mHeight, mHeight);
 		setMinimumHeight(mHeight);
 		mNavi = new ImageView(context);
 		mNavi.setScaleType(ScaleType.FIT_CENTER);
@@ -232,7 +232,7 @@ public class ToolBar extends LinearLayout {
 	}
 
 	public static interface OnMenuItemClickListener {
-        public boolean onMenuItemClick(android.view.MenuItem item);
+        public boolean onMenuItemClick(MenuItem item);
     }
 
 }

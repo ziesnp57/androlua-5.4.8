@@ -278,7 +278,7 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
      */
     private void bindGestureDetector() {
         // Generic touch listener that can be applied to any view that needs to process gestures
-        final View.OnTouchListener gestureListenerHandler = new View.OnTouchListener() {
+        final OnTouchListener gestureListenerHandler = new OnTouchListener() {
             @Override
             public boolean onTouch(final View v, final MotionEvent event) {
                 // Delegate the touch event to our gesture detector
@@ -539,7 +539,7 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
      * @param child The child.
      */
     private void measureChild(View child) {
-        ViewGroup.LayoutParams childLayoutParams = getLayoutParams(child);
+        LayoutParams childLayoutParams = getLayoutParams(child);
         int childHeightSpec = ViewGroup.getChildMeasureSpec(mHeightMeasureSpec, getPaddingTop() + getPaddingBottom(), childLayoutParams.height);
 
         int childWidthSpec;
@@ -555,11 +555,11 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
     /**
      * Gets a child's layout parameters, defaults if not available.
      */
-    private ViewGroup.LayoutParams getLayoutParams(View child) {
-        ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
+    private LayoutParams getLayoutParams(View child) {
+        LayoutParams layoutParams = child.getLayoutParams();
         if (layoutParams == null) {
             // Since this is a horizontal list view default to matching the parents height, and wrapping the width
-            layoutParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
         }
 
         return layoutParams;

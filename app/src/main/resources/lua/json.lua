@@ -38,7 +38,7 @@ local base = _G
 -----------------------------------------------------------------------------
 -- Module declaration
 -----------------------------------------------------------------------------
-json = {}
+module("json")
 
 -- Public functions
 
@@ -60,7 +60,7 @@ local isEncodable
 --- Encodes an arbitrary Lua object / variable.
 -- @param v The Lua object / variable to be JSON encoded.
 -- @return String containing the JSON encoding in internal Lua string format (i.e. not unicode)
-json.encode = function(v)
+function encode (v)
   -- Handle nil values
   if v==nil then
     return "null"
@@ -85,12 +85,12 @@ json.encode = function(v)
     local bArray, maxCount = isArray(v)
     if bArray then
       for i = 1,maxCount do
-        table.insert(rval, json.encode(v[i]))
+        table.insert(rval, encode(v[i]))
       end
     else	-- An object, not an array
       for i,j in base.pairs(v) do
         if isEncodable(i) and isEncodable(j) then
-          table.insert(rval, '"' .. encodeString(i) .. '":' .. json.encode(j))
+          table.insert(rval, '"' .. encodeString(i) .. '":' .. encode(j))
         end
       end
     end
@@ -116,7 +116,7 @@ end
 -- @param Lua object, number The object that was scanned, as a Lua table / string / number / boolean or nil,
 -- and the position of the first character after
 -- the scanned JSON object.
-json.decode = function(s, startPos)
+function decode(s, startPos)
   startPos = startPos and startPos or 1
   startPos = decode_scanWhitespace(s,startPos)
   base.assert(startPos<=string.len(s), 'Unterminated JSON encoded object found at position in [' .. s .. ']')
@@ -138,7 +138,7 @@ json.decode = function(s, startPos)
     return decode_scanString(s,startPos)
   end
   if string.sub(s,startPos,startPos+1)=='/*' then
-    return json.decode(s, decode_scanComment(s,startPos))
+    return decode(s, decode_scanComment(s,startPos))
   end
   -- Otherwise, it must be a constant
   return decode_scanConstant(s,startPos)
@@ -146,8 +146,8 @@ end
 
 --- The null function allows one to specify a null value in an associative array (which is otherwise
 -- discarded if you set the value with 'nil' in Lua. Simply set t = { first=json.null }
-json.null = function()
-  return json.null -- so json.null() will also return null ;-)
+function null()
+  return null -- so json.null() will also return null ;-)
 end
 -----------------------------------------------------------------------------
 -- Internal, PRIVATE functions.
@@ -178,7 +178,7 @@ function decode_scanArray(s,startPos)
       startPos = decode_scanWhitespace(s,startPos+1)
     end
     base.assert(startPos<=stringLen, 'JSON String ended unexpectedly scanning array.')
-    object, startPos = json.decode(s,startPos)
+    object, startPos = decode(s,startPos)
     table.insert(array,object)
   until false
 end
@@ -260,14 +260,14 @@ function decode_scanObject(s,startPos)
     end
     base.assert(startPos<=stringLen, 'JSON string ended unexpectedly scanning object.')
     -- Scan the key
-    key, startPos = json.decode(s,startPos)
+    key, startPos = decode(s,startPos)
     base.assert(startPos<=stringLen, 'JSON string ended unexpectedly searching for value of key ' .. key)
     startPos = decode_scanWhitespace(s,startPos)
     base.assert(startPos<=stringLen, 'JSON string ended unexpectedly searching for value of key ' .. key)
     base.assert(string.sub(s,startPos,startPos)==':','JSON object key-value assignment mal-formed at ' .. startPos)
     startPos = decode_scanWhitespace(s,startPos+1)
     base.assert(startPos<=stringLen, 'JSON string ended unexpectedly searching for value of key ' .. key)
-    value, startPos = json.decode(s,startPos)
+    value, startPos = decode(s,startPos)
     object[key]=value
   until false	-- infinite loop while key-value pairs are found
 end
@@ -374,4 +374,3 @@ function isEncodable(o)
   return (t=='string' or t=='boolean' or t=='number' or t=='nil' or t=='table') or (t=='function' and o==null)
 end
 
-return json

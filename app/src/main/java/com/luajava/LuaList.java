@@ -50,7 +50,7 @@ public class LuaList extends LuaObject implements List
 			pop();
 			return true;
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			pop();
 			return false;
 		}

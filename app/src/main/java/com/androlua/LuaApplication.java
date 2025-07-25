@@ -176,17 +176,9 @@ public class LuaApplication extends Application implements LuaContext {
         }
 
         File destDir = new File(luaExtDir);
-        if (!destDir.exists()) {
-            boolean b = destDir.mkdirs();
-            if(!b){
-                luaExtDir = this.getExternalFilesDir(null).getAbsolutePath() + "/AndroLua";
-            }
-
-        }
-        destDir = new File(luaExtDir);
-        if (!destDir.exists()) {
+        if (!destDir.exists())
             destDir.mkdirs();
-        }
+
         //定义文件夹
         localDir = getFilesDir().getAbsolutePath();
         odexDir = getDir("odex", Context.MODE_PRIVATE).getAbsolutePath();
@@ -232,6 +224,10 @@ public class LuaApplication extends Application implements LuaContext {
         return data;
     }
 
+    @Override
+    public Object getSharedData() {
+        return mSharedPreferences.getAll();
+    }
 
     @Override
     public Object getSharedData(String key) {

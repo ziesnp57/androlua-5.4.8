@@ -14,15 +14,11 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaMetaTable;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -142,7 +138,7 @@ public class LuaResources extends Resources implements LuaMetaTable {
     }
 
     @Override
-    public Object __call(Object... arg) throws LuaError {
+    public Object __call(Object... arg) throws LuaException {
         return null;
     }
 
@@ -360,25 +356,23 @@ public class LuaResources extends Resources implements LuaMetaTable {
         return mSuperResources.getXml(id);
     }
 
-    @NonNull
+
     @Override
     public CharSequence getQuantityText(int id, int quantity) throws NotFoundException {
         return mSuperResources.getQuantityText(id, quantity);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public Drawable getDrawableForDensity(int id, int density, @Nullable Theme theme) {
-            return mSuperResources.getDrawableForDensity(id, density, theme);
+    public Drawable getDrawableForDensity(int id, int density, Theme theme) {
+        return mSuperResources.getDrawableForDensity(id, density, theme);
     }
 
-    @NonNull
+    
     @Override
     public String getQuantityString(int id, int quantity) throws NotFoundException {
         return mSuperResources.getQuantityString(id, quantity);
     }
 
-    @NonNull
     @Override
     public String getQuantityString(int id, int quantity, Object... formatArgs) throws NotFoundException {
         return mSuperResources.getQuantityString(id, quantity, formatArgs);
@@ -404,7 +398,6 @@ public class LuaResources extends Resources implements LuaMetaTable {
         return mSuperResources.obtainAttributes(set, attrs);
     }
 
-    @NonNull
     @Override
     public TypedArray obtainTypedArray(int id) throws NotFoundException {
         return mSuperResources.obtainTypedArray(id);

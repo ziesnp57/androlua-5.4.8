@@ -340,10 +340,18 @@
 */
 
 /*
+@@ LUA_COMPAT_UNPACK controls the presence of global 'unpack'.
+** You can replace it with 'table.unpack'.
+*/
+#define LUA_COMPAT_UNPACK
+
+/*
 @@ LUA_COMPAT_5_3 controls other macros for compatibility with Lua 5.3.
 ** You can define it to get all options, or change specific options
 ** to fit your specific needs.
 */
+#define LUA_COMPAT_5_3
+
 #if defined(LUA_COMPAT_5_3)	/* { */
 
 /*

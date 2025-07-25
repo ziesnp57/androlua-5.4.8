@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -98,7 +97,7 @@ public class ScreenShot {
                     mScreenWidth = mService.getWidth();
                     mScreenDensity = mService.getDensity();
                 }
-                mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, ImageFormat.FLEX_RGBA_8888, 1);
+                mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, PixelFormat.RGBA_8888, 1);
                 
                 mMediaProjection = ((MediaProjectionManager) mService.getSystemService(Context.MEDIA_PROJECTION_SERVICE)).getMediaProjection(Activity.RESULT_OK, mResultData);
                 
@@ -231,7 +230,7 @@ public class ScreenShot {
     }
 
     private void createImageReader() {
-        mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, ImageFormat.FLEX_RGBA_8888, 1);
+        mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, PixelFormat.RGBA_8888, 1);
     }
 
     public void reSize() {

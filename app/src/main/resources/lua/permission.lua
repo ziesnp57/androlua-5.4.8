@@ -19,7 +19,7 @@ for i = 0, #sharedPkgList - 1 do
     --local pgi = pm.getPermissionGroupInfo( tmpPermInfo.group, 0);--权限分为不同的群组，通过权限名，我们得到该权限属于什么类型的权限。
     --print(i , "-" , permName );
     --print(tmpPermInfo)
-    -- print(i , "-" , pgi.loadLabel(pm) );
+    --print(i , "-" , pgi.loadLabel(pm) );
     --print(i , "-" , tmpPermInfo.loadLabel(pm));
     --print(i , "-" , tmpPermInfo.loadDescription(pm));
     permName = permName:match("%.([%w_]+)$")

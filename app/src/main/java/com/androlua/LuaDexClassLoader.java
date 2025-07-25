@@ -8,7 +8,7 @@ public class LuaDexClassLoader extends DexClassLoader {
 
 	private String mDexPath;
 
-	public LuaDexClassLoader(java.lang.String dexPath, java.lang.String optimizedDirectory, java.lang.String libraryPath, java.lang.ClassLoader parent) {
+	public LuaDexClassLoader(String dexPath, String optimizedDirectory, String libraryPath, ClassLoader parent) {
 		super(dexPath, optimizedDirectory, libraryPath, parent);
 		mDexPath=dexPath;
 	}

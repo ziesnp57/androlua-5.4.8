@@ -114,5 +114,5 @@ public enum BinaryOp {
         }
     };
 
-    abstract Rop rop(com.android.cglib.dx.rop.type.TypeList types);
+    abstract Rop rop(TypeList types);
 }

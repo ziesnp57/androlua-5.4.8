@@ -175,7 +175,7 @@ static int clone (lua_State *L) {
 
 static int tconst (lua_State *L) {
   luaL_checktype(L, 1, LUA_TTABLE);
-  lua_const(L,1);
+  lua_concat(L,1);
   return 1;
 }
 #endif

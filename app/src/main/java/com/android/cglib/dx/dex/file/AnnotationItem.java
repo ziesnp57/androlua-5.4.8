@@ -44,7 +44,7 @@ public final class AnnotationItem extends OffsettedItem {
     /** the required alignment for instances of this class */
     private static final int ALIGNMENT = 1;
 
-
+    /** {@code non-null;} unique instance of {@link #TypeIdSorter} */
     private static final TypeIdSorter TYPE_ID_SORTER = new TypeIdSorter();
 
     /** {@code non-null;} the annotation to represent */

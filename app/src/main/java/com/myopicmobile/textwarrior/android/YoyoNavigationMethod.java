@@ -31,7 +31,7 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 	public YoyoNavigationMethod(FreeScrollingTextField textField) {
 		super(textField);
 		DisplayMetrics dm=textField.getContext().getResources().getDisplayMetrics();
-		_yoyoSize = (int) TypedValue.applyDimension(2, (float)(textField.BASE_TEXT_SIZE_PIXELS * 1.5), dm);
+		_yoyoSize = (int) TypedValue.applyDimension(2, (float)(textField.BASE_TEXT_SIZE_PIXELS * 1.2), dm);
 		_yoyoCaret = new Yoyo();
 		_yoyoStart = new Yoyo();
 		_yoyoEnd = new Yoyo();
@@ -130,10 +130,11 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 		if (newCaretIndex >= 0) {
 			_textField.moveCaret(newCaretIndex);
 			//snap the handle to the caret
-			Rect newCaretBounds = _textField.getBoundingBox(newCaretIndex);
-			int newX = newCaretBounds.left + _textField.getPaddingLeft();
-			int newY = newCaretBounds.bottom + _textField.getPaddingTop();
-
+			//Rect newCaretBounds = _textField.getBoundingBox(newCaretIndex);
+			//int newX = newCaretBounds.left + _textField.getPaddingLeft();
+			//int newY = newCaretBounds.bottom + _textField.getPaddingTop();
+			int newX = _textField.getCaretX();
+			int newY = _textField.getCaretY();
 			_yoyo.attachYoyo(newX, newY);
 		}
 
@@ -202,9 +203,11 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 			_yoyoEnd.hide();
 
 			if (!_isCaretHandleTouched) {
-				Rect caret = _textField.getBoundingBox(_textField.getCaretPosition());
-				int x = caret.left + _textField.getPaddingLeft();
-				int y = caret.bottom + _textField.getPaddingTop();
+				//Rect caret = _textField.getBoundingBox(_textField.getCaretPosition());
+				//int x = caret.left + _textField.getPaddingLeft();
+				//int y = caret.bottom + _textField.getPaddingTop();
+				int x = _textField.getCaretX();
+				int y = _textField.getCaretY();
 				_yoyoCaret.setRestingCoord(x, y);
 			}
 			if (_isShowYoyoCaret)
@@ -217,14 +220,18 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 			_yoyoEnd.show();
 
 			if (!(_isStartHandleTouched && _isEndHandleTouched)) {
-				Rect caret = _textField.getBoundingBox(_textField.getSelectionStart());
-				int x = caret.left + _textField.getPaddingLeft();
-				int y = caret.bottom + _textField.getPaddingTop();
+				//Rect caret = _textField.getBoundingBox(_textField.getSelectionStart());
+				//int x = caret.left + _textField.getPaddingLeft();
+				//int y = caret.bottom + _textField.getPaddingTop();
+				int x = _textField.getSelectionStartX();
+				int y = _textField.getSelectionStartY();
 				_yoyoStart.setRestingCoord(x, y);
 
-				Rect caret2 = _textField.getBoundingBox(_textField.getSelectionEnd());
-				int x2 = caret2.left + _textField.getPaddingLeft();
-				int y2 = caret2.bottom + _textField.getPaddingTop();
+				//Rect caret2 = _textField.getBoundingBox(_textField.getSelectionEnd());
+				//int x2 = caret2.left + _textField.getPaddingLeft();
+				//int y2 = caret2.bottom + _textField.getPaddingTop();
+				int x2 = _textField.getSelectionEndX();
+				int y2 = _textField.getSelectionEndY();
 				_yoyoEnd.setRestingCoord(x2, y2);
 			}
 
@@ -279,7 +286,9 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 			_brush = new Paint();
 			_brush.setColor(_textField.getColorScheme().getColor(Colorable.CARET_BACKGROUND));
 			//,_brush.setStrokeWidth(2);
-			_brush.setAntiAlias(true);  
+			_brush.setAntiAlias(true);
+			//_brush.setStyle(Paint.Style.STROKE);
+			//_brush.setStrokeWidth(_yoyoSize/6);
 		}
 
 		public void setHandleColor(int color) {
@@ -298,11 +307,13 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 		public void draw(Canvas canvas, boolean activated) {
 			int radius = getRadius();
 
-			canvas.drawLine(_anchorX, _anchorY,
-							_handleX + radius, _handleY + radius, _brush);
-			canvas.drawArc(new RectF(_anchorX - radius, _anchorY - radius / 2 - YOYO_STRING_RESTING_HEIGHT,
-									 _handleX + radius * 2, _handleY + radius / 2), 60, 60, true, _brush);
-			canvas.drawOval(new RectF(_handleX, _handleY, _handleX + HANDLE_RECT.right, _handleY + HANDLE_RECT.bottom), _brush);
+			//canvas.drawLine(_anchorX, _anchorY, _handleX + radius, _handleY + radius, _brush);
+			//_brush.setStyle(Paint.Style.FILL);
+			canvas.drawArc(new RectF(_anchorX - (int)(radius * 2), _anchorY - radius  - YOYO_STRING_RESTING_HEIGHT,
+									 _handleX + (int)(radius * 3), _handleY + radius ), 60, 60, true, _brush);
+			//canvas.drawOval(new RectF(_handleX, _handleY, _handleX + HANDLE_RECT.right, _handleY + HANDLE_RECT.bottom), _brush);
+			//_brush.setStyle(Paint.Style.STROKE);
+			canvas.drawArc(new RectF(_handleX, _handleY, _handleX + HANDLE_RECT.right, _handleY + HANDLE_RECT.bottom), 0, 360, true, _brush);
 		}
 
 		final public int getRadius() {
@@ -325,6 +336,7 @@ public class YoyoNavigationMethod extends TouchNavigationMethod {
 		 * hanging directly below, but does not trigger any redrawing
 		 */
 		public void setRestingCoord(int x, int y) {
+			y+=YOYO_STRING_RESTING_HEIGHT;
 			_anchorX = x;
 			_anchorY = y;
 			_handleX = x - getRadius();

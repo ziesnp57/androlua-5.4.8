@@ -676,11 +676,183 @@ static int ll_require (lua_State *L) {
 
 /* }====================================================== */
 
+/*
+** {======================================================
+** 'module' function
+** =======================================================
+*/
+#if defined(LUA_COMPAT_MODULE)
 
+/*
+** changes the environment variable of calling function
+*/
+static void set_env (lua_State *L) {
+  lua_Debug ar;
+  if (lua_getstack(L, 1, &ar) == 0 ||
+      lua_getinfo(L, "f", &ar) == 0 ||  /* get calling function */
+      lua_iscfunction(L, -1))
+    luaL_error(L, "'module' not called from a Lua function");
+  lua_pushvalue(L, -2);  /* copy new environment table to top */
+  lua_setupvalue(L, -2, 1);
+  lua_pop(L, 1);  /* remove function */
+}
+
+static void db_setfenv (lua_State *L) {
+  lua_Debug ar;
+  int nvar = 1;  /* local-variable index */
+  /* stack-level argument */
+  if (!lua_getstack(L, 1, &ar))  /* out of range? */
+     luaL_argerror(L, 1, "level out of range");
+  lua_getinfo(L, "u", &ar);
+  lua_pushvalue(L, -1);  /* copy new environment table to top */
+  lua_setlocal(L, &ar, nvar + ar.nparams);
+  return ;
+}
+
+//mod by nirenr
+static void dooptions (lua_State *L, int n) {
+  int i;
+  for (i = 2; i <= n; i++) {
+    if (lua_isfunction(L, i)) {  /* avoid 'calling' extra info. */
+      lua_pushvalue(L, i);  /* get option (a function) */
+      lua_pushvalue(L, -2);  /* module */
+      lua_call(L, 1, 0);
+    }
+	else if (lua_isstring(L, i)) {
+      if (lua_getglobal(L, lua_tostring(L, i))!=LUA_TNIL){
+		lua_setfield(L, -2, lua_tostring(L, i));
+        continue;
+      }
+	  else{
+		  lua_pop(L,1);
+	  }
+      lua_getglobal(L, "require");
+      lua_pushvalue(L, i);
+	  lua_call(L, 1, 1);
+	  if (lua_istable(L, -1)) {
+        lua_setfield(L, -2, lua_tostring(L, i));
+      }
+	  else {
+        lua_pop(L, 1);
+      }
+    }
+	else if (lua_istable(L, i)) {
+  if (!lua_getmetatable(L, -1)) {
+    lua_createtable(L, 0, 1);
+    lua_pushvalue(L, -1);
+    lua_setmetatable(L, -3);
+  }
+  lua_pushvalue(L, i);
+  lua_setfield(L, -2, "__index");
+  lua_pop(L,1);
+    }
+  }
+}
+
+
+//mod by nirenr
+static void modinit (lua_State *L, const char *modname) {
+  const char *dot;
+  lua_pushvalue(L, -1);
+  lua_setfield(L, -2, "_M");  /* module._M = module */
+  lua_pushstring(L, modname);
+  lua_setfield(L, -2, "_NAME");
+  dot = strrchr(modname, '.');  /* look for last dot in module name */
+  if (dot == NULL) dot = modname;
+  else dot++;
+  /* set _PACKAGE as package name (full module name minus last part) */
+  lua_pushlstring(L, modname, dot - modname);
+  lua_setfield(L, -2, "_PACKAGE");
+}
+
+//mod by nirenr
+static const char *const mod_eventname[] = {
+        "__index", "__newindex",
+        "__gc", "__mode", "__len", "__eq",
+        "__add", "__sub", "__mul", "__mod", "__pow",
+        "__div", "__idiv",
+        "__band", "__bor", "__bxor", "__shl", "__shr",
+        "__unm", "__bnot", "__lt", "__le",
+        "__concat", "__call", "__close"
+};
+
+
+//mod by nirenr
+static int modcall (lua_State *L) {
+  int n = lua_gettop(L);
+  lua_getfield(L, 1, "new");
+  lua_insert(L, 2);
+  lua_newtable(L);
+  lua_pushvalue(L, -1);
+  lua_insert(L, 3);
+  lua_insert(L, 2);
+  lua_call(L, n, 0);
+  if (!lua_getmetatable(L, 2)) {
+    lua_createtable(L, 0, 1);
+    lua_pushvalue(L, -1);
+    lua_setmetatable(L, 2);
+  }
+  int i;
+  for(i=0;i<25;i++){
+    lua_getfield(L, 1, mod_eventname[i]);
+    lua_setfield(L, -2, mod_eventname[i]);
+  }
+
+  lua_pushvalue(L, 1);
+  lua_setfield(L, -2, "__index");
+  lua_pop(L, 1);
+  return 1;
+}
+
+
+//mod by nirenr
+static int ll_module (lua_State *L) {
+  const char *modname = luaL_checkstring(L, 1);
+  int lastarg = lua_gettop(L);  /* last parameter */
+  luaL_pushmodule(L, modname, 1);  /* get/create module table */
+  /* check whether table already has a _NAME field */
+  if (lua_getfield(L, -1, "_NAME") != LUA_TNIL)
+    lua_pop(L, 1);  /* table is an initialized module */
+  else {  /* no; initialize it */
+    lua_pop(L, 1);
+    modinit(L, modname);
+  }
+  lua_pushvalue(L, -1);
+  db_setfenv(L);
+  if (!lua_getmetatable(L, -1)) {
+      lua_newtable(L);
+      lua_pushvalue(L, -1);
+      lua_setmetatable(L, -2);
+  }
+  lua_pushcfunction(L, &modcall);
+  lua_setfield(L, -2, "__call");
+  lua_pop(L, 1);
+  dooptions(L, lastarg);
+  return 1;
+}
+
+
+static int ll_seeall (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  if (!lua_getmetatable(L, 1)) {
+    lua_createtable(L, 0, 1); /* create new metatable */
+    lua_pushvalue(L, -1);
+    lua_setmetatable(L, 1);
+  }
+  lua_pushglobaltable(L);
+  lua_setfield(L, -2, "__index");  /* mt.__index = _G */
+  return 0;
+}
+
+#endif
+/* }====================================================== */
 
 
 static const luaL_Reg pk_funcs[] = {
   {"loadlib", ll_loadlib},
+#if defined(LUA_COMPAT_MODULE)
+        {"seeall", ll_seeall},
+#endif
   {"searchpath", ll_searchpath},
   /* placeholders */
   {"preload", NULL},
@@ -693,6 +865,9 @@ static const luaL_Reg pk_funcs[] = {
 
 
 static const luaL_Reg ll_funcs[] = {
+#if defined(LUA_COMPAT_MODULE)
+        {"module", ll_module},
+#endif
   {"require", ll_require},
   {NULL, NULL}
 };

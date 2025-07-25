@@ -4,7 +4,7 @@ android {
     namespace 'com.androlua'
     defaultConfig {
         applicationId "com.androlua"
-        minSdkVersion 19
+        minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 25
         multiDexEnabled false
@@ -45,11 +45,12 @@ android {
         targetCompatibility JavaVersion.VERSION_11
         sourceCompatibility JavaVersion.VERSION_11
     }
-    ndkVersion '25.0.8775105'
+    ndkVersion '29.0.13599879 rc2'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:support-annotations:28.0.0'
     implementation 'androidx.annotation:annotation:1.4.0'
     implementation 'androidx.core:core:1.6.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'

@@ -19,7 +19,7 @@ public class PageLayout extends HorizontalScrollView {
 
 	private LinearLayout wrapper;
 
-	private PageLayout.OnPageChangeListener mOnPageChangeListener;
+	private OnPageChangeListener mOnPageChangeListener;
 
 	private int mIdx;
 

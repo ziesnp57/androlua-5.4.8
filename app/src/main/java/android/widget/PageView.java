@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2011 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package android.widget;
 
 import android.content.*;
@@ -15,12 +31,47 @@ import java.util.*;
 
 import android.view.animation.Interpolator;
 
+/**
+ * Layout manager that allows the user to flip left and right
+ * through pages of data.  You supply an implementation of a
+ * {@link PageAdapter} to generate the pages that the view shows.
+ * <p>
+ * <p>Note this class is currently under early design and
+ * development.  The API will likely change in later updates of
+ * the compatibility library, requiring changes to the source code
+ * of apps when they are compiled against the newer version.</p>
+ * <p>
+ * <p>PageView is most often used in conjunction with {@link android.app.Fragment},
+ * which is a convenient way to supply and manage the lifecycle of each page.
+ * There are standard adapters implemented for using fragments with the PageView,
+ * which cover the most common use cases.  These are
+ * classes have simple code showing how to build a full user interface
+ * with them.
+ * <p>
+ * <p>For more information about how to use PageView, read <a
+ * href="{@docRoot}training/implementing-navigation/lateral.html">Creating Swipe Views with
+ * Tabs</a>.</p>
+ * <p>
+ * <p>Below is a more complicated example of PageView, using it in conjunction
+ * with {@link android.app.ActionBar} tabs.  You can find other examples of using
+ * PageView in the API 4+ Support Demos and API 13+ Support Demos sample code.
+ * <p>
+ * {@sample development/samples/Support13Demos/src/com/example/android/supportv13/app/ActionBarTabsPage.java
+ * complete}
+ */
 public class PageView extends ViewGroup {
-
+    /**
+     * Indicates that the page is in an idle, settled state. The current page
+     * is fully in view and no animation is in progress.
+     */
     public static final int SCROLL_STATE_IDLE = 0;
-
+    /**
+     * Indicates that the page is currently being dragged by the user.
+     */
     public static final int SCROLL_STATE_DRAGGING = 1;
-
+    /**
+     * Indicates that the page is in the process of settling to a final position.
+     */
     public static final int SCROLL_STATE_SETTLING = 2;
     private static final String TAG = "PageView";
     private static final boolean DEBUG = false;
@@ -45,7 +96,10 @@ public class PageView extends ViewGroup {
             return t * t * t * t * t + 1.0f;
         }
     };
-
+    /**
+     * Sentinel value for no current active pointer.
+     * Used by {@link #mActivePointerId}.
+     */
     private static final int INVALID_POINTER = -1;
     // If the page is at least this close to its final position, complete the scroll
     // on touch down and let the user interact with the content inside instead of
@@ -58,7 +112,10 @@ public class PageView extends ViewGroup {
     private final ArrayList<ItemInfo> mItems = new ArrayList<ItemInfo>();
     private final ItemInfo mTempItem = new ItemInfo();
     private final Rect mTempRect = new Rect();
-
+    /**
+     * Used to track what the expected number of items in the adapter should be.
+     * If the app changes this when we don't expect it, we'll throw a big obnoxious exception.
+     */
     private int mExpectedAdapterCount;
     private BasePageAdapter mAdapter;
     private int mCurItem;   // Index of currently displayed page.
@@ -87,14 +144,21 @@ public class PageView extends ViewGroup {
     private int mDefaultGutterSize;
     private int mGutterSize;
     private int mTouchSlop;
-
+    /**
+     * Position of the last motion event.
+     */
     private float mLastMotionX;
     private float mLastMotionY;
     private float mInitialMotionX;
     private float mInitialMotionY;
-
+    /**
+     * ID of the active pointer. This is used to retain consistency during
+     * drags/flings if multiple pointers are used.
+     */
     private int mActivePointerId = INVALID_POINTER;
-
+    /**
+     * Determines speed during touch scrolling
+     */
     private VelocityTracker mVelocityTracker;
     private int mMinimumVelocity;
     private int mMaximumVelocity;
@@ -194,11 +258,20 @@ public class PageView extends ViewGroup {
         }
     }
 
-
+    /**
+     * Retrieve the current adapter supplying pages.
+     *
+     * @return The currently registered PageAdapter
+     */
     public BasePageAdapter getAdapter() {
         return mAdapter;
     }
 
+    /**
+     * Set a PageAdapter that will supply views for this page as needed.
+     *
+     * @param adapter Adapter to use
+     */
     public void setAdapter(BasePageAdapter adapter) {
         if (mAdapter != null) {
             mAdapter.unregisterDataSetObserver(mObserver);
@@ -257,7 +330,12 @@ public class PageView extends ViewGroup {
         setCurrentItem(item, true);
     }
 
-
+    /**
+     * Set the currently selected page.
+     *
+     * @param item         Item index to select
+     * @param smoothScroll True to smoothly scroll to the new item, false to transition immediately
+     */
     public void setCurrentItem(int item, boolean smoothScroll) {
         mPopulatePending = false;
         setCurrentItemInternal(item, smoothScroll, false);
@@ -267,6 +345,17 @@ public class PageView extends ViewGroup {
         return mCurItem;
     }
 
+    /**
+     * Set the currently selected page. If the PageView has already been through its first
+     * layout with its current adapter there will be a smooth animated transition between
+     * the current item and the specified item.
+     *
+     * @param item Item index to select
+     */
+    public void setCurrentItem(int item) {
+        mPopulatePending = false;
+        setCurrentItemInternal(item, !mFirstLayout, false);
+    }
 
     void setCurrentItemInternal(int item, boolean smoothScroll, boolean always) {
         setCurrentItemInternal(item, smoothScroll, always, 0);
@@ -336,13 +425,29 @@ public class PageView extends ViewGroup {
         }
     }
 
-
+    /**
+     * Set a listener that will be invoked whenever the page changes or is incrementally
+     * scrolled. See {@link OnPageChangeListener}.
+     *
+     * @param listener Listener to set
+     * @deprecated Use {@link #addOnPageChangeListener(OnPageChangeListener)}
+     * and {@link #removeOnPageChangeListener(OnPageChangeListener)} instead.
+     */
 
     public void setOnPageChangeListener(OnPageChangeListener listener) {
         mOnPageChangeListener = listener;
     }
 
-
+    /**
+     * Add a listener that will be invoked whenever the page changes or is incrementally
+     * scrolled. See {@link OnPageChangeListener}.
+     * <p>
+     * <p>Components that add a listener should take care to remove it when finished.
+     * Other components that take ownership of a view may call {@link #clearOnPageChangeListeners()}
+     * to remove all attached listeners.</p>
+     *
+     * @param listener listener to add
+     */
     public void addOnPageChangeListener(OnPageChangeListener listener) {
         if (mOnPageChangeListeners == null) {
             mOnPageChangeListeners = new ArrayList<>();
@@ -350,19 +455,39 @@ public class PageView extends ViewGroup {
         mOnPageChangeListeners.add(listener);
     }
 
-
+    /**
+     * Remove a listener that was previously added via
+     * {@link #addOnPageChangeListener(OnPageChangeListener)}.
+     *
+     * @param listener listener to remove
+     */
     public void removeOnPageChangeListener(OnPageChangeListener listener) {
         if (mOnPageChangeListeners != null) {
             mOnPageChangeListeners.remove(listener);
         }
     }
 
+    /**
+     * Remove all listeners that are notified of any changes in scroll state or position.
+     */
     public void clearOnPageChangeListeners() {
         if (mOnPageChangeListeners != null) {
             mOnPageChangeListeners.clear();
         }
     }
 
+    /**
+     * Set a {@link PageTransformer} that will be called for each attached page whenever
+     * the scroll position is changed. This allows the application to apply custom property
+     * transformations to each page, overriding the default sliding look and feel.
+     * <p>
+     * <p><em>Note:</em> Prior to Android 3.0 the property animation APIs did not exist.
+     * As a result, setting a PageTransformer prior to Android 3.0 (API 11) will have no effect.</p>
+     *
+     * @param reverseDrawingOrder true if the supplied PageTransformer requires page views
+     *                            to be drawn from last to first instead of first to last.
+     * @param transformer         PageTransformer that will modify each page's animation properties
+     */
     public void setPageTransformer(boolean reverseDrawingOrder, PageTransformer transformer) {
         if (Build.VERSION.SDK_INT >= 11) {
             final boolean hasTransformer = transformer != null;
@@ -403,17 +528,46 @@ public class PageView extends ViewGroup {
         return result;
     }
 
-
+    /**
+     * Set a separate OnPageChangeListener for internal use by the support library.
+     *
+     * @param listener Listener to set
+     * @return The old listener that was set, if any.
+     */
     OnPageChangeListener setInternalPageChangeListener(OnPageChangeListener listener) {
         OnPageChangeListener oldListener = mInternalPageChangeListener;
         mInternalPageChangeListener = listener;
         return oldListener;
     }
 
+    /**
+     * Returns the number of pages that will be retained to either side of the
+     * current page in the view hierarchy in an idle state. Defaults to 1.
+     *
+     * @return How many pages will be kept offscreen on either side
+     * @see #setOffscreenPageLimit(int)
+     */
     public int getOffscreenPageLimit() {
         return mOffscreenPageLimit;
     }
 
+    /**
+     * Set the number of pages that should be retained to either side of the
+     * current page in the view hierarchy in an idle state. Pages beyond this
+     * limit will be recreated from the adapter when needed.
+     * <p>
+     * <p>This is offered as an optimization. If you know in advance the number
+     * of pages you will need to support or have lazy-loading mechanisms in place
+     * on your pages, tweaking this setting can have benefits in perceived smoothness
+     * of paging animations and interaction. If you have a small number of pages (3-4)
+     * that you can keep active all at once, less time will be spent in layout for
+     * newly created view subtrees as the user pages back and forth.</p>
+     * <p>
+     * <p>You should keep this limit low, especially if your pages have complex layouts.
+     * This setting defaults to 1.</p>
+     *
+     * @param limit How many pages will be kept offscreen in an idle state.
+     */
     public void setOffscreenPageLimit(int limit) {
         if (limit < DEFAULT_OFFSCREEN_PAGES) {
             Log.w(TAG, "Requested offscreen page limit " + limit + " too small; defaulting to " +
@@ -426,12 +580,23 @@ public class PageView extends ViewGroup {
         }
     }
 
-
+    /**
+     * Return the margin between pages.
+     *
+     * @return The size of the margin in pixels
+     */
     public int getPageMargin() {
         return mPageMargin;
     }
 
-
+    /**
+     * Set the margin between pages.
+     *
+     * @param marginPixels Distance between adjacent pages in pixels
+     * @see #getPageMargin()
+     * @see #setPageMarginDrawable(Drawable)
+     * @see #setPageMarginDrawable(int)
+     */
     public void setPageMargin(int marginPixels) {
         final int oldMargin = mPageMargin;
         mPageMargin = marginPixels;
@@ -442,7 +607,11 @@ public class PageView extends ViewGroup {
         requestLayout();
     }
 
-
+    /**
+     * Set a drawable that will be used to fill the margin between pages.
+     *
+     * @param d Drawable to display between pages
+     */
     public void setPageMarginDrawable(Drawable d) {
         mMarginDrawable = d;
         if (d != null) refreshDrawableState();
@@ -450,6 +619,11 @@ public class PageView extends ViewGroup {
         invalidate();
     }
 
+    /**
+     * Set a drawable that will be used to fill the margin between pages.
+     *
+     * @param resId Resource ID of a drawable to display between pages
+     */
     public void setPageMarginDrawable(int resId) {
         setPageMarginDrawable(getContext().getResources().getDrawable(resId));
     }
@@ -478,12 +652,23 @@ public class PageView extends ViewGroup {
         return (float) Math.sin(f);
     }
 
-
+    /**
+     * Like {@link View#scrollBy}, but scroll smoothly instead of immediately.
+     *
+     * @param x the number of pixels to scroll by on the X axis
+     * @param y the number of pixels to scroll by on the Y axis
+     */
     void smoothScrollTo(int x, int y) {
         smoothScrollTo(x, y, 0);
     }
 
-
+    /**
+     * Like {@link View#scrollBy}, but scroll smoothly instead of immediately.
+     *
+     * @param x        the number of pixels to scroll by on the X axis
+     * @param y        the number of pixels to scroll by on the Y axis
+     * @param velocity the velocity associated with a fling, if applicable. (0 otherwise)
+     */
     void smoothScrollTo(int x, int y, int velocity) {
         if (getChildCount() == 0) {
             // Nothing to do.
@@ -1302,6 +1487,19 @@ public class PageView extends ViewGroup {
         }
         return true;
     }
+
+    /**
+     * This method will be invoked when the current page is scrolled, either as part
+     * of a programmatically initiated smooth scroll or a user initiated touch scroll.
+     * If you override this method you must call through to the superclass implementation
+     * (e.g. super.onPageScrolled(position, offset, offsetPixels)) before onPageScrolled
+     * returns.
+     *
+     * @param position     Position index of the first page currently being displayed.
+     *                     Page position+1 will be visible if positionOffset is nonzero.
+     * @param offset       Value from [0, 1) indicating the offset from the page at position.
+     * @param offsetPixels Value in pixels indicating the offset from position.
+     */
 
     protected void onPageScrolled(int position, float offset, int offsetPixels) {
         // Offset any decor views if needed - keep them on-screen at all times.
@@ -2573,8 +2771,8 @@ public class PageView extends ViewGroup {
      * contains that state.
      */
     public static class SavedState extends BaseSavedState {
-        public static final Parcelable.Creator<SavedState> CREATOR
-                = new Parcelable.Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR
+                = new Creator<SavedState>() {
             @Override
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
@@ -2631,7 +2829,7 @@ public class PageView extends ViewGroup {
         /**
          * Gravity setting for use on decor views only:
          * Where to position the view page within the overall PageView
-         * container; constants are defined in {@link android.view.Gravity}.
+         * container; constants are defined in {@link Gravity}.
          */
         public int gravity;
 

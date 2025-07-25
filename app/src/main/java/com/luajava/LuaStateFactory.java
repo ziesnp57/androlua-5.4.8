@@ -29,7 +29,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.*;
-import android.content.Context;
 
 /**
  * This class is responsible for instantiating new LuaStates.
@@ -46,7 +45,7 @@ public final class LuaStateFactory
 	 * Array with all luaState's instances
 	 */
 	private static final Map<Long,LuaState> states = new HashMap<Long,LuaState>();
-
+	
 	/**
 	 * Non-public constructor. 
 	 */
@@ -103,6 +102,6 @@ public final class LuaStateFactory
 	{
 		states.put(idx, null);
 	}
-
+	
 
 }

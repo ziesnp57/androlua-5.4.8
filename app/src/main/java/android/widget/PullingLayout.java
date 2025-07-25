@@ -61,7 +61,7 @@ public class PullingLayout extends RelativeLayout {
     // 下拉的距离。注意：pullDownY和pullUpY不可能同时不为0
     public float pullDownY = 0;
     // 回滚速度
-    public float MOVE_SPEED = 8;
+    public float MOVE_SPEED = 10;
     // 当前状态
     private int state = INIT;
     // 刷新回调接口
@@ -122,8 +122,8 @@ public class PullingLayout extends RelativeLayout {
     private boolean mPullDown;
     private LayoutInflater mInflater;
     private OnLoadMoreListener mLoadMoreListener;
-    private PullingLayout.OnPullUpListener mPullUpListener;
-    private PullingLayout.OnPullDownListener mPullDownListener;
+    private OnPullUpListener mPullUpListener;
+    private OnPullDownListener mPullDownListener;
     private DisplayMetrics dm;
     private int mForegroundColor;
     private int mBackgroundColor;
@@ -786,7 +786,7 @@ public class PullingLayout extends RelativeLayout {
      */
     public void autoRefresh() {
         AutoRefreshAndLoadTask task = new AutoRefreshAndLoadTask();
-        task.execute(20);
+        task.execute(8);
     }
 
     /**
@@ -893,7 +893,7 @@ public class PullingLayout extends RelativeLayout {
      */
     private class AutoRefreshAndLoadTask extends
             AsyncTask<Integer, Float, String> {
-
+        private int MOVE_SPEED=16;
         @Override
         protected String doInBackground(Integer... params) {
             while (pullDownY < 4 / 3 * refreshDist) {
@@ -1012,18 +1012,18 @@ public class PullingLayout extends RelativeLayout {
 
             RelativeLayout layout = new RelativeLayout(context);
             layout.setPadding(0, dp(20), 0, dp(20));
-            RelativeLayout.LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             lp.addRule(12);
             addView(layout, lp);
 
             RelativeLayout layout2 = new RelativeLayout(context);
-            RelativeLayout.LayoutParams lp2 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp2 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             lp2.addRule(13);
             layout.addView(layout2, lp2);
 
             mPullView = new ImageView(context);
             mPullView.setBackgroundDrawable(new PullDownDrawable());
-            RelativeLayout.LayoutParams lp3 = new LayoutParams(w, w);
+            LayoutParams lp3 = new LayoutParams(w, w);
             lp3.setMargins(dp(60), 0, 0, 0);
             lp3.addRule(15);
             layout2.addView(mPullView, lp3);
@@ -1031,7 +1031,7 @@ public class PullingLayout extends RelativeLayout {
             mLoadingView = new ImageView(context);
             mLoadingView.setVisibility(GONE);
             mLoadingView.setBackgroundDrawable(new LoadingDrawable());
-            RelativeLayout.LayoutParams lp4 = new LayoutParams(w, w);
+            LayoutParams lp4 = new LayoutParams(w, w);
             lp4.setMargins(dp(60), 0, 0, 0);
             lp4.addRule(15);
             layout2.addView(mLoadingView, lp4);
@@ -1039,13 +1039,13 @@ public class PullingLayout extends RelativeLayout {
             mStateText = new TextView(context);
             mStateText.setText(pull_to_refresh);
             mStateText.setTextSize(16);
-            RelativeLayout.LayoutParams lp5 = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp5 = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             lp5.addRule(13);
             layout2.addView(mStateText, lp5);
 
             mStateView = new ImageView(context);
             mStateView.setVisibility(GONE);
-            RelativeLayout.LayoutParams lp6 = new LayoutParams(w, w);
+            LayoutParams lp6 = new LayoutParams(w, w);
             lp6.setMargins(dp(60), 0, 0, 0);
             lp6.addRule(15);
             layout2.addView(mStateView, lp6);
@@ -1096,18 +1096,18 @@ public class PullingLayout extends RelativeLayout {
             int w = dp(30);
             RelativeLayout layout = new RelativeLayout(context);
             layout.setPadding(0, dp(20), 0, dp(20));
-            RelativeLayout.LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             lp.addRule(10);
             addView(layout, lp);
 
             RelativeLayout layout2 = new RelativeLayout(context);
-            RelativeLayout.LayoutParams lp2 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp2 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             lp2.addRule(13);
             layout.addView(layout2, lp2);
 
             mPullView = new ImageView(context);
             mPullView.setBackgroundDrawable(new PullUpDrawable());
-            RelativeLayout.LayoutParams lp3 = new LayoutParams(w, w);
+            LayoutParams lp3 = new LayoutParams(w, w);
             lp3.setMargins(dp(60), 0, 0, 0);
             lp3.addRule(15);
             layout2.addView(mPullView, lp3);
@@ -1115,7 +1115,7 @@ public class PullingLayout extends RelativeLayout {
             mLoadingView = new ImageView(context);
             mLoadingView.setVisibility(GONE);
             mLoadingView.setBackgroundDrawable(new LoadingDrawable());
-            RelativeLayout.LayoutParams lp4 = new LayoutParams(w, w);
+            LayoutParams lp4 = new LayoutParams(w, w);
             lp4.setMargins(dp(60), 0, 0, 0);
             lp4.addRule(15);
             layout2.addView(mLoadingView, lp4);
@@ -1123,13 +1123,13 @@ public class PullingLayout extends RelativeLayout {
             mStateText = new TextView(context);
             mStateText.setText(pullup_to_load);
             mStateText.setTextSize(16);
-            RelativeLayout.LayoutParams lp5 = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams lp5 = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             lp5.addRule(13);
             layout2.addView(mStateText, lp5);
 
             mStateView = new ImageView(context);
             mStateView.setVisibility(GONE);
-            RelativeLayout.LayoutParams lp6 = new LayoutParams(w, w);
+            LayoutParams lp6 = new LayoutParams(w, w);
             lp6.setMargins(dp(60), 0, 0, 0);
             lp6.addRule(15);
             layout2.addView(mStateView, lp6);

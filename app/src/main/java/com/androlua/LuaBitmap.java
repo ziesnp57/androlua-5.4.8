@@ -6,18 +6,6 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.util.Xml;
-
-import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
-
-import org.xmlpull.v1.XmlPullParser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,11 +14,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -39,7 +26,29 @@ public class LuaBitmap {
     static WeakHashMap<String, WeakReference<Bitmap>> cache = new WeakHashMap<String, WeakReference<Bitmap>>();
 
     private static int l;
-    private static long mCacheTime = 7 * 24 * 60 * 60 * 1000;
+    private static long mCacheTime = 60 * 60 * 1000;
+    private static HashMap<String, String> sHeader;
+    public static void setHeader(HashMap<String,String> header){
+        sHeader=header;
+    }
+
+    public static void setUserAgent(String userAgent) {
+        if (sHeader == null)
+            sHeader = new HashMap<>();
+        sHeader.put("User-Agent", userAgent);
+    }
+
+    public static void setReferer(String referer) {
+        if (sHeader == null)
+            sHeader = new HashMap<>();
+        sHeader.put("Referer", referer);
+    }
+
+    public static void setCookie(String cookie) {
+        if (sHeader == null)
+            sHeader = new HashMap<>();
+        sHeader.put("Cookie", cookie);
+    }
 
     public static void setCacheTime(long time) {
         mCacheTime = time;
@@ -51,7 +60,8 @@ public class LuaBitmap {
 
     public static boolean checkCache(LuaContext context, String url) {
         // TODO: Implement this method
-        String path = context.getLuaExtDir("cache") + "/" + url.hashCode();
+        @SuppressLint("DefaultLocale")
+        String path = new File(imageCacheDir , String.format("%08x",url.hashCode())).getAbsolutePath();
         File f = new File(path);
         return f.exists() && mCacheTime!=-1 && System.currentTimeMillis() - f.lastModified() < mCacheTime;
     }
@@ -80,11 +90,17 @@ public class LuaBitmap {
         is.close();
         return bitmap;
     }
+    private static String imageCacheDir=new File(LuaApplication.getInstance().getExternalCacheDir(),"images").getAbsolutePath();
+    static {
+        new File(imageCacheDir).mkdirs();
+    }
 
     public static Bitmap getHttpBitmap(LuaContext context, String url) throws IOException {
         //Log.d(TAG, url);
-        String path = context.getLuaExtDir("cache") + "/" + url.hashCode();
+        @SuppressLint("DefaultLocale")
+        String path = new File(imageCacheDir, String.format("%08x", url.hashCode())).getAbsolutePath();
         File f = new File(path);
+        f.getParentFile().mkdirs();
         //context.sendMsg(System.currentTimeMillis() +";"+ f.lastModified() +";"+ mCacheTime +";"+(System.currentTimeMillis() - f.lastModified() < mCacheTime));
         if (f.exists() && mCacheTime!=-1 && System.currentTimeMillis() - f.lastModified() < mCacheTime) {
             return decodeScale(context.getWidth(), new File(path));
@@ -94,6 +110,12 @@ public class LuaBitmap {
         URLConnection conn = (HttpURLConnection) myFileUrl.openConnection();
         conn.setConnectTimeout(120000);
         conn.setDoInput(true);
+        if (sHeader != null) {
+            Set<Map.Entry<String, String>> entries = sHeader.entrySet();
+            for (Map.Entry<String, String> entry : entries) {
+                conn.setRequestProperty(entry.getKey(), entry.getValue());
+            }
+        }
         conn.connect();
         InputStream is = conn.getInputStream();
         FileOutputStream out = new FileOutputStream(path);
@@ -251,54 +273,4 @@ public class LuaBitmap {
             }
         }
     }
-
-    public static Drawable getVectorDrawable(@NonNull Context context, @NonNull byte[] binXml) {
-        try {
-            // Get the binary XML parser (XmlBlock.Parser) and use it to create the drawable
-            // This is the equivalent of what AssetManager#getXml() does
-            @SuppressLint("PrivateApi")
-            Class<?> xmlBlock = Class.forName("android.content.res.XmlBlock");
-            Constructor xmlBlockConstr = xmlBlock.getConstructor(byte[].class);
-            Method xmlParserNew = xmlBlock.getDeclaredMethod("newParser");
-            xmlBlockConstr.setAccessible(true);
-            xmlParserNew.setAccessible(true);
-            XmlPullParser parser = (XmlPullParser) xmlParserNew.invoke(
-                    xmlBlockConstr.newInstance((Object) binXml));
-
-            if (Build.VERSION.SDK_INT >= 24) {
-                return Drawable.createFromXml(context.getResources(), parser);
-            } else {
-                // Before API 24, vector drawables aren't rendered correctly without compat lib
-                final AttributeSet attrs = Xml.asAttributeSet(parser);
-                int type = parser.next();
-                while (type != XmlPullParser.START_TAG) {
-                    type = parser.next();
-                }
-                return VectorDrawableCompat.createFromXmlInner(context.getResources(), parser, attrs, null);
-            }
-
-        } catch (Exception e) {
-            Log.e("__LuaBitmap__", "Vector creation failed", e);
-        }
-        return null;
-    }
-
-    public static Drawable getVectorDrawable(Context context,String path){
-        try {
-            FileInputStream fi = new FileInputStream(path);
-            try {
-                byte[] b= new byte[fi.available()];
-                fi.read(b);
-                fi.close();
-                return getVectorDrawable((Context) context,b);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
 }

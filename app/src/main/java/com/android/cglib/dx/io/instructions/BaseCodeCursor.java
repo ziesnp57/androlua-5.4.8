@@ -24,7 +24,7 @@ public abstract class BaseCodeCursor implements CodeCursor {
     /** base address map */
     private final AddressMap baseAddressMap;
 
-
+    /** next index within {@link #array} to read from or write to */
     private int cursor;
 
     /**

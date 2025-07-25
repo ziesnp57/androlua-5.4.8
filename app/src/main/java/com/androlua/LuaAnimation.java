@@ -3,7 +3,7 @@ package com.androlua;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaFunction;
 
 /**
@@ -34,7 +34,7 @@ public class LuaAnimation extends Animation {
             if (mApplyTransformation != null) {
                 mApplyTransformation.call(interpolatedTime, t);
             }
-        } catch (LuaError e) {
+        } catch (LuaException e) {
             mContext.sendError("applyTransformation", e);
         }
     }

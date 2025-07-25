@@ -15,7 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaFunction;
 import com.luajava.LuaJavaAPI;
 import com.luajava.LuaObject;
@@ -60,11 +60,11 @@ public class LuaMultiAdapter extends BaseAdapter {
     };
     private HashMap<String, Boolean> loaded = new HashMap<String, Boolean>();
 
-    public LuaMultiAdapter(LuaContext context, LuaTable layout) throws LuaError {
+    public LuaMultiAdapter(LuaContext context, LuaTable layout) throws LuaException {
         this(context, null, layout);
     }
 
-    public LuaMultiAdapter(LuaContext context, LuaTable<Integer, LuaTable<String, Object>> data, LuaTable<Integer, LuaTable> layout) throws LuaError {
+    public LuaMultiAdapter(LuaContext context, LuaTable<Integer, LuaTable<String, Object>> data, LuaTable<Integer, LuaTable> layout) throws LuaException {
         mContext = context;
         mLayout = layout;
         mRes = mContext.getContext().getResources();
@@ -91,14 +91,9 @@ public class LuaMultiAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        try{
-            int t = mData.get(position + 1).get("__type",Integer.class) - 1;
-            return t < 0 ? 0 : t;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-     }
+        int t = ((Long) mData.get(position + 1).get("__type")).intValue() - 1;
+        return t < 0 ? 0 : t;
+    }
 
 
     public void setAnimation(LuaTable<Integer, LuaFunction<Animation>> animation) {
@@ -197,7 +192,7 @@ public class LuaMultiAdapter extends BaseAdapter {
         // TODO: Implement this method
         View view = null;
         LuaObject holder = null;
-        int t = mData.get(position + 1).get("__type", Integer.class);
+        int t = ((Long) mData.get(position + 1).get("__type")).intValue();
         t = t < 1 ? 1 : t;
         if (convertView == null) {
             try {
@@ -208,7 +203,7 @@ public class LuaMultiAdapter extends BaseAdapter {
                 view = loadLayout.call(layout, holder, AbsListView.class);
                 view.setTag(holder);
                 //mHolderCache.put(view,holder);
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 return new View(mContext.getContext());
             }
         } else {
@@ -269,7 +264,7 @@ public class LuaMultiAdapter extends BaseAdapter {
         return view;
     }
 
-    private void setFields(View view, LuaTable<String, Object> fields) throws LuaError {
+    private void setFields(View view, LuaTable<String, Object> fields) throws LuaException {
         Set<Map.Entry<String, Object>> sets = fields.entrySet();
         for (Map.Entry<String, Object> entry2 : sets) {
             String key2 = entry2.getKey();
@@ -295,7 +290,7 @@ public class LuaMultiAdapter extends BaseAdapter {
                 if (value instanceof Bitmap)
                     ((ImageView) view).setImageBitmap((Bitmap) value);
                 else if (value instanceof String)
-                    ((ImageView) view).setImageDrawable(new LuaMultiAdapter.AsyncLoader().getBitmap(mContext, (String) value));
+                    ((ImageView) view).setImageDrawable(new AsyncLoader().getBitmap(mContext, (String) value));
                 else if (value instanceof Drawable)
                     ((ImageView) view).setImageDrawable((Drawable) value);
                 else if (value instanceof Number)
@@ -306,7 +301,7 @@ public class LuaMultiAdapter extends BaseAdapter {
         }
     }
 
-    private int javaSetter(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetter(Object obj, String methodName, Object value) throws LuaException {
 
         if (methodName.length() > 2 && methodName.substring(0, 2).equals("on") && value instanceof LuaFunction)
             return javaSetListener(obj, methodName, value);
@@ -314,7 +309,7 @@ public class LuaMultiAdapter extends BaseAdapter {
         return javaSetMethod(obj, methodName, value);
     }
 
-    private int javaSetListener(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetListener(Object obj, String methodName, Object value) throws LuaException {
         String name = "setOn" + methodName.substring(2) + "Listener";
         ArrayList<Method> methods = LuaJavaAPI.getMethod(obj.getClass(), name, false);
         for (Method m : methods) {
@@ -329,14 +324,14 @@ public class LuaMultiAdapter extends BaseAdapter {
                     m.invoke(obj, listener);
                     return 1;
                 } catch (Exception e) {
-                    throw new LuaError(e);
+                    throw new LuaException(e);
                 }
             }
         }
         return 0;
     }
 
-    private int javaSetMethod(Object obj, String methodName, Object value) throws LuaError {
+    private int javaSetMethod(Object obj, String methodName, Object value) throws LuaException {
         if (Character.isLowerCase(methodName.charAt(0))) {
             methodName = Character.toUpperCase(methodName.charAt(0)) + methodName.substring(1);
         }
@@ -385,9 +380,9 @@ public class LuaMultiAdapter extends BaseAdapter {
             }
         }
         if (buf.length() > 0)
-            throw new LuaError("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
+            throw new LuaException("Invalid setter " + methodName + ". Invalid Parameters.\n" + buf.toString() + type.toString());
         else
-            throw new LuaError("Invalid setter " + methodName + " is not a method.\n");
+            throw new LuaException("Invalid setter " + methodName + " is not a method.\n");
 
     }
 
@@ -420,7 +415,7 @@ public class LuaMultiAdapter extends BaseAdapter {
                 LuaBitmap.getBitmap(mContext, mPath);
                 mHandler.sendEmptyMessage(0);
             } catch (IOException e) {
-                mContext.sendError("AsyncLoader", e);
+                mContext.sendError("AsyncLoader Error", e);
             }
 
         }

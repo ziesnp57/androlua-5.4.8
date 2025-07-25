@@ -3,7 +3,7 @@ package com.androlua;
 import android.content.Context;
 import android.view.View;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaObject;
 import com.luajava.LuaTable;
 
@@ -34,7 +34,7 @@ public class LuaView extends View {
                     mOnMeasure.call(widthMeasureSpec,heightMeasureSpec,this);
                     return;
                 }
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 e.printStackTrace();
             }
         }

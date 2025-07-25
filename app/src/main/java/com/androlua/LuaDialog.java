@@ -73,7 +73,7 @@ public class LuaDialog extends AlertDialog implements  DialogInterface.OnClickLi
         setButton(DialogInterface.BUTTON_NEGATIVE, text, this);
     }
 
-    public void setOnClickListener(LuaDialog.OnClickListener listener) {
+    public void setOnClickListener(OnClickListener listener) {
         mOnClickListener=listener;
     }
 
@@ -183,13 +183,13 @@ public class LuaDialog extends AlertDialog implements  DialogInterface.OnClickLi
     }
 
     @Override
-    public void setOnCancelListener(DialogInterface.OnCancelListener listener) {
+    public void setOnCancelListener(OnCancelListener listener) {
         // TODO: Implement this method
         super.setOnCancelListener(listener);
     }
 
     @Override
-    public void setOnDismissListener(DialogInterface.OnDismissListener listener) {
+    public void setOnDismissListener(OnDismissListener listener) {
         // TODO: Implement this method
         super.setOnDismissListener(listener);
     }

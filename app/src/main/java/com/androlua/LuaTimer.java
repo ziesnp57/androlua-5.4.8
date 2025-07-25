@@ -22,22 +22,22 @@ public class LuaTimer extends TimerX implements LuaGcable
 
 	private LuaTimerTask task;
 	
-	public LuaTimer(LuaContext main,String src) throws LuaError
+	public LuaTimer(LuaContext main,String src) throws LuaException
 	{
 		this(main,src,null);
 	}
-	public LuaTimer(LuaContext main,String src,Object[] arg) throws LuaError
+	public LuaTimer(LuaContext main,String src,Object[] arg) throws LuaException
 	{
 		super("LuaTimer");
 		main.regGc(this);
 		task= new LuaTimerTask(main, src,arg);
 	}
 	
-	public LuaTimer(LuaContext main,LuaObject func) throws LuaError
+	public LuaTimer(LuaContext main,LuaObject func) throws LuaException
 	{
 		this(main,func,null);
 	}
-	public LuaTimer(LuaContext main,LuaObject func,Object[] arg) throws LuaError
+	public LuaTimer(LuaContext main,LuaObject func,Object[] arg) throws LuaException
 	{
 		super("LuaTimer");
 		main.regGc(this);

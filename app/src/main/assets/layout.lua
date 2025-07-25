@@ -1,124 +1,29 @@
 layout={
   main={
-    RelativeLayout;
-    layout_width="fill";
-    layout_height="fill";
+    LinearLayout,
+    layout_width="fill",
+    layout_height="fill",
+    orientation="vertical";
     {
-      LinearLayout,
+      LuaEditor,
+      id="editor",
+      text= "",
       layout_width="fill",
       layout_height="fill",
-      orientation="vertical";
-      {
-        HorizontalScrollView;
-        horizontalScrollBarEnabled=false,
-        {
-          LinearLayout;
-          id="ps_bar3";
-          layout_width="fill";
-        };
-        layout_width="fill";
-      };
-      {
-        LuaEditor,
-        id="editor",
-        text= "",
-        layout_width="fill",
-        layout_height="fill",
-        layout_weight=1 ,
-        --gravity="top"
-      },
-      {
-        HorizontalScrollView;
-        horizontalScrollBarEnabled=false,
-        {
-          LinearLayout;
-          layout_width="fill";
-          {
-            TextView,
-            id="errormes",
-            layout_width="fill";
-            layout_height="fill";
-          }
-        };
-        layout_width="fill";
-      };
-      {
-        HorizontalScrollView;
-        horizontalScrollBarEnabled=false,
-        {
-          LinearLayout;
-          id="ps_bar2";
-          layout_width="fill";
-        };
-        layout_width="fill";
-      };
-      {
-        HorizontalScrollView;
-        horizontalScrollBarEnabled=false,
-        {
-          LinearLayout;
-          id="ps_bar";
-          layout_width="fill";
-        };
-        layout_width="fill";
-      };
+      layout_weight=1 ,
+      --gravity="top"
     },
     {
-      Button;
-      layout_height="56dp";
-      layout_marginRight="7dp";
-      id="bt";
-      layout_alignParentRight="true";
-      layout_width="56dp";
-      layout_alignParentBottom="true";
-      text="打开";
-      layout_marginBottom="80dp";
+      HorizontalScrollView;
+      horizontalScrollBarEnabled=false,
+      {
+        LinearLayout;
+        id="ps_bar";
+        layout_width="fill";
+      };
+      layout_width="fill";
     };
-    {
-      Button;
-      layout_alignLeft="bt";
-      layout_height="53dp";
-      id="bt1";
-      layout_above="bt";
-      layout_width="53dp";
-      text="新建文件";
-      Visibility="gone";
-      layout_marginBottom="8dp";
-    };
-    {
-      Button;
-      layout_alignLeft="bt";
-      layout_height="53dp";
-      id="bt2";
-      layout_above="bt1";
-      layout_width="53dp";
-      text="保存文件";
-      Visibility="gone";
-      layout_marginBottom="8dp";
-    };
-    {
-      Button;
-      layout_alignLeft="bt";
-      layout_height="53dp";
-      id="bt3";
-      layout_above="bt2";
-      layout_width="53dp";
-      text="导航";
-      Visibility="gone";
-      layout_marginBottom="8dp";
-    };
-    {
-      Button;
-      layout_alignLeft="bt";
-      layout_height="53dp";
-      id="bt4";
-      layout_above="bt3";
-      layout_width="53dp";
-      text="颜色选择";
-      Visibility="gone";
-      layout_marginBottom="8dp";
-    };
-  };
+  },
 
   build={
     ScrollView ,

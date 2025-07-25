@@ -214,6 +214,16 @@ public final class RegisterSpec
                     || ((local != null) && local.equals(other.local)));
     }
 
+    /**
+     * Helper for {@link #equals} and {@link #ForComparison.equals},
+     * which actually does the test.
+     *
+     * @param reg value of the instance variable, for another instance
+     * @param type value of the instance variable, for another instance
+     * @param local value of the instance variable, for another instance
+     * @return whether this instance is equal to one with the given
+     * values
+     */
     private boolean equals(int reg, TypeBearer type, LocalItem local) {
         return (this.reg == reg)
             && this.type.equals(type)
@@ -221,6 +231,13 @@ public final class RegisterSpec
                     || ((this.local != null) && this.local.equals(local)));
     }
 
+    /**
+     * Compares by (in priority order) register number, unwrapped type
+     * (that is types not {@link TypeBearer}s, and local info.
+     *
+     * @param other {@code non-null;} spec to compare to
+     * @return {@code -1..1;} standard result of comparison
+     */
     public int compareTo(RegisterSpec other) {
         if (this.reg < other.reg) {
             return -1;
@@ -249,7 +266,15 @@ public final class RegisterSpec
         return hashCodeOf(reg, type, local);
     }
 
-
+    /**
+     * Helper for {@link #hashCode} and {@link #ForComparison.hashCode},
+     * which actually does the calculation.
+     *
+     * @param reg value of the instance variable
+     * @param type value of the instance variable
+     * @param local value of the instance variable
+     * @return the hash code
+     */
     private static int hashCodeOf(int reg, TypeBearer type, LocalItem local) {
         int hash = (local != null) ? local.hashCode() : 0;
 

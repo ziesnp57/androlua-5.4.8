@@ -3,6 +3,7 @@ package com.androlua;
 import android.content.Intent;
 import android.os.Bundle;
 
+//import com.baidu.mobstat.StatService;
 
 public class Main extends LuaActivity
 {
@@ -16,6 +17,7 @@ public class Main extends LuaActivity
 		if(getIntent().getBooleanExtra("isVersionChanged",false) && (savedInstanceState==null)){
 			onVersionChanged(getIntent().getStringExtra("newVersionName"),getIntent().getStringExtra("oldVersionName"));
 		}
+//		StatService.start(this);
 	}
 
 	@Override

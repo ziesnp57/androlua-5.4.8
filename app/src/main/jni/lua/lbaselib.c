@@ -536,11 +536,29 @@ static int luaB_tostring (lua_State *L) {
 }
 
 
+/* compatibility with old module system */
+#if defined(LUA_COMPAT_MODULE)
+static int findtable (lua_State *L) {
+  if (lua_gettop(L)==1){
+    lua_pushglobaltable(L);
+    lua_insert(L, 1);
+  }
+  luaL_checktype(L, 1, LUA_TTABLE);
+  const char *name = luaL_checklstring(L, 2, 0);
+  lua_pushstring(L, luaL_findtable(L, 1, name, 0));
+  return 2;
+}
+#endif
+
+
 static const luaL_Reg base_funcs[] = {
   {"assert", luaB_assert},
   {"collectgarbage", luaB_collectgarbage},
   {"dofile", luaB_dofile},
   {"error", luaB_error},
+#if defined(LUA_COMPAT_MODULE)
+        {"findtable", findtable},
+#endif
   {"getmetatable", luaB_getmetatable},
   {"ipairs", luaB_ipairs},
   {"loadfile", luaB_loadfile},

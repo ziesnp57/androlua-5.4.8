@@ -2,6 +2,7 @@ package com.androlua;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -15,7 +16,7 @@ import android.widget.ArrayListAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaObject;
 import com.luajava.LuaState;
 
@@ -37,11 +38,11 @@ public class LuaArrayAdapter extends ArrayListAdapter {
 
     private Drawable mDraw;
 
-    public LuaArrayAdapter(LuaContext context, LuaObject resource) throws LuaError {
+    public LuaArrayAdapter(LuaContext context, LuaObject resource) throws LuaException {
         this(context, resource, new String[0]);
     }
 
-    public LuaArrayAdapter(LuaContext context, LuaObject resource, Object[] objects) throws LuaError {
+    public LuaArrayAdapter(LuaContext context, LuaObject resource, Object[] objects) throws LuaException {
         super(context.getContext(), 0, objects);
         mContext = context;
         mResource = resource;
@@ -72,7 +73,7 @@ public class LuaArrayAdapter extends ArrayListAdapter {
             L.pop(1);
             try {
                 view = (View) loadlayout.call(mResource, holder, AbsListView.class);
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 return new View(mContext.getContext());
             }
         } else {
@@ -117,6 +118,21 @@ public class LuaArrayAdapter extends ArrayListAdapter {
                     Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
                     int w = bmp.getWidth();
                     int h = bmp.getHeight();
+                    if (img.getScaleType() == ImageView.ScaleType.FIT_XY) {
+                        h = (int) (mContext.getWidth() * ((float) h) / ((float) w));
+                        w = mContext.getWidth();
+                        img.setLayoutParams(new ViewGroup.LayoutParams(w, h));
+                    }
+                } else if (drawable instanceof LoadingDrawable) {
+                        int w=mContext.getWidth();
+                        int h = w/4;
+                        w = mContext.getWidth();
+                        img.setLayoutParams(new ViewGroup.LayoutParams(w, h));
+                }else if (drawable instanceof Drawable) {
+                    Rect rect = drawable.getBounds();
+                    int w = rect.width();
+                    int h = rect.height();
+
                     if (img.getScaleType() == ImageView.ScaleType.FIT_XY) {
                         h = (int) (mContext.getWidth() * ((float) h) / ((float) w));
                         w = mContext.getWidth();
@@ -167,8 +183,9 @@ public class LuaArrayAdapter extends ArrayListAdapter {
             try {
                 LuaBitmap.getBitmap(mContext, mPath);
                 mHandler.sendEmptyMessage(0);
-            } catch (IOException e) {
-                mContext.sendError("AsyncLoader", e);
+            } catch (Exception e) {
+                e.printStackTrace();
+                mContext.sendError("AsyncLoader Error", e);
             }
 
         }

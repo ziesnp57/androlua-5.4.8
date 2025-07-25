@@ -36,7 +36,7 @@ public class CrashHandler implements UncaughtExceptionHandler
 	public static final String TAG = "CrashHandler";
 
 	//系统默认的UncaughtException处理类 
-	private Thread.UncaughtExceptionHandler mDefaultHandler;
+	private UncaughtExceptionHandler mDefaultHandler;
 	//CrashHandler实例
 	private static CrashHandler INSTANCE = new CrashHandler();
 	//程序的Context对象
@@ -224,7 +224,7 @@ public class CrashHandler implements UncaughtExceptionHandler
 			String fileName = "crash-" + time + "-" + timestamp + ".log";
 			if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) 
 			{
-				String path = "/sdcard/Androlua/crash/";
+				String path = "/sdcard/androlua/crash/";
 				File dir = new File(path);
 				if (!dir.exists())
 					dir.mkdirs();

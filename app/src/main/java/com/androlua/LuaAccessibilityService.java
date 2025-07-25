@@ -13,6 +13,8 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.hardware.display.VirtualDisplay;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,9 +30,9 @@ import android.view.accessibility.AccessibilityNodeInfo;
 
 import com.androlua.util.ClickRunnable;
 import com.androlua.util.GlobalActionAutomator;
-import com.luajava.LuaError;
 import com.nirenr.screencapture.ScreenCaptureListener;
 import com.nirenr.screencapture.ScreenShot;
+import com.luajava.LuaException;
 import com.luajava.LuaFunction;
 import com.luajava.LuaTable;
 import com.nirenr.Point;
@@ -142,7 +144,7 @@ public class LuaAccessibilityService extends AccessibilityService {
         try {
             LuaFunction func = (LuaFunction) as.get("onCreate");
             func.call(this);
-        } catch (LuaError e) {
+        } catch (LuaException e) {
             LuaFunction func = (LuaFunction) as.get("onError");
             if (func == null) {
                 Log.i("onCreate", e.getMessage());
@@ -151,7 +153,7 @@ public class LuaAccessibilityService extends AccessibilityService {
 
             try {
                 func.call(e);
-            } catch (LuaError e2) {
+            } catch (LuaException e2) {
                 Log.i("onCreate", e.getMessage());
             }
         }
@@ -227,7 +229,7 @@ public class LuaAccessibilityService extends AccessibilityService {
         try {
             LuaFunction func = (LuaFunction) as.get("onServiceConnected");
             func.call(this);
-        } catch (LuaError e) {
+        } catch (LuaException e) {
             LuaFunction func = (LuaFunction) as.get("onError");
             if (func == null) {
                 Log.i("onServiceConnected", e.getMessage());
@@ -236,7 +238,7 @@ public class LuaAccessibilityService extends AccessibilityService {
 
             try {
                 func.call(e);
-            } catch (LuaError e2) {
+            } catch (LuaException e2) {
                 Log.i("onServiceConnected", e.getMessage());
             }
         }
@@ -259,7 +261,7 @@ public class LuaAccessibilityService extends AccessibilityService {
         if (onAccessibilityEvent != null) {
             try {
                 onAccessibilityEvent.call(p1);
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 Log.i("lua", "onAccessibilityEvent: " + e.toString());
             }
             return;
@@ -274,7 +276,7 @@ public class LuaAccessibilityService extends AccessibilityService {
         try {
             LuaFunction func = (LuaFunction) as.get("onAccessibilityEvent");
             func.call(p1);
-        } catch (LuaError e) {
+        } catch (LuaException e) {
             LuaFunction func = (LuaFunction) as.get("onError");
             if (func == null) {
                 Log.i("onAccessibilityEvent", e.getMessage());
@@ -282,7 +284,7 @@ public class LuaAccessibilityService extends AccessibilityService {
             }
             try {
                 func.call(e);
-            } catch (LuaError e2) {
+            } catch (LuaException e2) {
                 Log.i("onAccessibilityEvent", e.getMessage());
             }
         }
@@ -298,6 +300,7 @@ public class LuaAccessibilityService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        mLuaAccessibilityService=null;
         if(sAccessibilityServiceCallbacks!=null)
             sAccessibilityServiceCallbacks.onDestroy(this);
         stopScreenshot();
@@ -339,7 +342,7 @@ public class LuaAccessibilityService extends AccessibilityService {
             public void onScreenCaptureDone(Bitmap bitmap) {
                 try {
                     listener.call(bitmap);
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                 }
             }
@@ -348,7 +351,7 @@ public class LuaAccessibilityService extends AccessibilityService {
             public void onScreenCaptureError(String msg) {
                 try {
                     listener.call(null,msg);
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                 }
 
@@ -398,7 +401,7 @@ public class LuaAccessibilityService extends AccessibilityService {
             public void run() {
                 try {
                     callback.call(execute(menu, node), menu, node);
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                     sendError("postExecute", e);
                 }
@@ -407,7 +410,7 @@ public class LuaAccessibilityService extends AccessibilityService {
     }
 
 
-    private void sendError(String postClick, LuaError e) {
+    private void sendError(String postClick, LuaException e) {
     }
 
     public void postExecute(long time, final String menu, final AccessibilityNodeInfo node) {
@@ -451,7 +454,7 @@ public class LuaAccessibilityService extends AccessibilityService {
             public void onDone(boolean bool, LuaTable bs, String name, int idx) {
                 try {
                     callback.call(bool, bs, name, idx);
-                } catch (LuaError e) {
+                } catch (LuaException e) {
                     e.printStackTrace();
                     sendError("click", e);
                 }

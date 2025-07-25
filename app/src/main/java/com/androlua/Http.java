@@ -1,7 +1,10 @@
 package com.androlua;
 
+import android.util.Log;
+import android.webkit.MimeTypeMap;
+
 import com.androlua.util.AsyncTaskX;
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaObject;
 import com.luajava.LuaString;
 
@@ -18,14 +21,61 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 public class Http {
 
     private static HashMap<String, String> sHeader;
+
+    static {
+         try {
+            SSLContext sslcontext = null;
+            sslcontext = SSLContext.getInstance("SSL");
+            sslcontext.init(null, new TrustManager[]{new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
+                }
+
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+            }}, new java.security.SecureRandom());
+
+             HostnameVerifier ignoreHostnameVerifier = new HostnameVerifier() {
+                 public boolean verify(String s, SSLSession sslsession) {
+                     //这块也不用有啥逻辑，确认结果是true就行
+                     return true;
+                 }
+             };
+             HttpsURLConnection.setDefaultHostnameVerifier(ignoreHostnameVerifier);
+             HttpsURLConnection.setDefaultSSLSocketFactory(sslcontext.getSocketFactory());
+         } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
+
+
+    }
 
     public static void setHeader(HashMap<String, String> header) {
         sHeader = header;
@@ -37,6 +87,18 @@ public class Http {
         sHeader.put("User-Agent", userAgent);
     }
 
+    public static void setReferer(String referer) {
+        if (sHeader == null)
+            sHeader = new HashMap<>();
+        sHeader.put("Referer", referer);
+    }
+
+    public static void setCookie(String cookie) {
+        if (sHeader == null)
+            sHeader = new HashMap<>();
+        sHeader.put("Cookie", cookie);
+    }
+
    /* static {
         setUserAgent("Mozilla/5.0 (Linux; Android 8.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.111 Mobile Safari/537.36 EdgA/41.0.0.1722");
     }*/
@@ -46,135 +108,135 @@ public class Http {
     }
 
     public static HttpTask get(String url, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", null, null, null, callback);
+        HttpTask task = new HttpTask(url, "GET", null, null, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask get(String url, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", null, null, header, callback);
+        HttpTask task = new HttpTask(url, "GET", null, null, header, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask get(String url, String cookie, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "GET", null, cookie, header, callback) : new HttpTask(url, "GET", cookie, null, header, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "GET", null, cookie, header, callback) : new HttpTask(url, "GET", cookie, null, header, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask get(String url, String cookie, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "GET", null, cookie, null, callback) : new HttpTask(url, "GET", cookie, null, null, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "GET", null, cookie, null, callback) : new HttpTask(url, "GET", cookie, null, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask get(String url, String cookie, String charset, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", cookie, charset, null, callback);
+        HttpTask task = new HttpTask(url, "GET", cookie, charset, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask get(String url, String cookie, String charset, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", cookie, charset, header, callback);
+        HttpTask task = new HttpTask(url, "GET", cookie, charset, header, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask download(String url, String data, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", null, null, null, callback);
+        HttpTask task = new HttpTask(url, "GET", null, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask download(String url, String data, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", null, null, header, callback);
+        HttpTask task = new HttpTask(url, "GET", null, null, header, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask download(String url, String data, String cookie, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", cookie, null, null, callback);
+        HttpTask task = new HttpTask(url, "GET", cookie, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask download(String url, String data, String cookie, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "GET", cookie, null, header, callback);
+        HttpTask task = new HttpTask(url, "GET", cookie, null, header, callback);
         task.execute(data);
         return task;
     }
 
 
     public static HttpTask delete(String url, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "DELETE", null, null, null, callback);
+        HttpTask task = new HttpTask(url, "DELETE", null, null, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask delete(String url, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "DELETE", null, null, header, callback);
+        HttpTask task = new HttpTask(url, "DELETE", null, null, header, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask delete(String url, String cookie, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "DELETE", null, cookie, header, callback) : new HttpTask(url, "DELETE", cookie, null, header, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "DELETE", null, cookie, header, callback) : new HttpTask(url, "DELETE", cookie, null, header, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask delete(String url, String cookie, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "DELETE", null, cookie, null, callback) : new HttpTask(url, "DELETE", cookie, null, null, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "DELETE", null, cookie, null, callback) : new HttpTask(url, "DELETE", cookie, null, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask delete(String url, String cookie, String charset, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "DELETE", cookie, charset, null, callback);
+        HttpTask task = new HttpTask(url, "DELETE", cookie, charset, null, callback);
         task.execute();
         return task;
     }
 
     public static HttpTask delete(String url, String cookie, String charset, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "DELETE", cookie, charset, header, callback);
+        HttpTask task = new HttpTask(url, "DELETE", cookie, charset, header, callback);
         task.execute();
         return task;
     }
 
 
     public static HttpTask post(String url, String data, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "POST", null, null, null, callback);
+        HttpTask task = new HttpTask(url, "POST", null, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask post(String url, String data, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "POST", null, null, header, callback);
+        HttpTask task = new HttpTask(url, "POST", null, null, header, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask post(String url, String data, String cookie, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "POST", null, cookie, null, callback) : new HttpTask(url, "POST", cookie, null, null, callback);
+        HttpTask task = cookie.matches("[\\w\\-.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "POST", null, cookie, null, callback) : new HttpTask(url, "POST", cookie, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask post(String url, String data, String cookie, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "POST", null, cookie, header, callback) : new HttpTask(url, "POST", cookie, null, header, callback);
+        HttpTask task = cookie.matches("[\\w\\-.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "POST", null, cookie, header, callback) : new HttpTask(url, "POST", cookie, null, header, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask post(String url, String data, String cookie, String charset, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "POST", cookie, charset, null, callback);
+        HttpTask task = new HttpTask(url, "POST", cookie, charset, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask post(String url, String data, String cookie, String charset, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "POST", cookie, charset, header, callback);
+        HttpTask task = new HttpTask(url, "POST", cookie, charset, header, callback);
         task.execute(data);
         return task;
     }
@@ -210,7 +272,7 @@ public class Http {
     }
 
 
-    private final static String boundary = "----qwertyuiopasdfghjklzxcvbnm";
+    private final static String boundary = "----q1w2e3r4t5y6u7i8o9p0a1s2d3f4g5h6j7k8l9z0x1c2v3b4n5m6";
 
     public static HttpTask post(String url, HashMap<String, String> data, HashMap<String, String> file, LuaObject callback) {
         return post(url, data, file, null, null, null, callback);
@@ -236,9 +298,21 @@ public class Http {
         if (header == null)
             header = new HashMap<>();
         header.put("Content-Type", "multipart/form-data;boundary=" + boundary);
-        Http.HttpTask task = new HttpTask(url, "POST", cookie, charset, header, callback);
+        HttpTask task = new HttpTask(url, "POST", cookie, charset, header, callback);
         task.execute(new Object[]{formatMultiDate(data, file, charset)});
         return task;
+    }
+
+    private static String getType(String file) {
+        int lastDot = file.lastIndexOf(46);
+        if (lastDot >= 0) {
+            String extension = file.substring(lastDot + 1);
+            String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            if (mime != null) {
+                return mime;
+            }
+        }
+        return "application/octet-stream";
     }
 
     private static byte[] formatMultiDate(HashMap<String, String> data, HashMap<String, String> file, String charset) {
@@ -255,49 +329,55 @@ public class Http {
 
         for (Map.Entry<String, String> entry : file.entrySet()) {
             try {
-                buff.write(String.format("--%s\r\nContent-Disposition:form-data;name=\"%s\";filename=\"%s\"\r\nContent-Type:application/octet-stream\r\n\r\n", boundary, entry.getKey(), entry.getValue()).getBytes(charset));
+                buff.write(String.format("--%s\r\nContent-Disposition:form-data;name=\"%s\";filename=\"%s\"\r\nContent-Type:%s\r\n\r\n", boundary, entry.getKey(), entry.getValue(),getType(entry.getValue())).getBytes(charset));
                 buff.write(LuaUtil.readAll(new FileInputStream(entry.getValue())));
                 buff.write("\r\n".getBytes(charset));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        try {
+            buff.write(String.format("--%s--\r\n", boundary).getBytes(charset));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return buff.toByteArray();
     }
 
 
     public static HttpTask put(String url, String data, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "PUT", null, null, null, callback);
+        HttpTask task = new HttpTask(url, "PUT", null, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask put(String url, String data, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "PUT", null, null, header, callback);
+        HttpTask task = new HttpTask(url, "PUT", null, null, header, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask put(String url, String data, String cookie, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "PUT", null, cookie, null, callback) : new HttpTask(url, "PUT", cookie, null, null, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "PUT", null, cookie, null, callback) : new HttpTask(url, "PUT", cookie, null, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask put(String url, String data, String cookie, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "PUT", null, cookie, header, callback) : new HttpTask(url, "PUT", cookie, null, header, callback);
+        HttpTask task = cookie.matches("[\\w\\-\\.:]+") && Charset.isSupported(cookie) ? new HttpTask(url, "PUT", null, cookie, header, callback) : new HttpTask(url, "PUT", cookie, null, header, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask put(String url, String data, String cookie, String charset, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "PUT", cookie, charset, null, callback);
+        HttpTask task = new HttpTask(url, "PUT", cookie, charset, null, callback);
         task.execute(data);
         return task;
     }
 
     public static HttpTask put(String url, String data, String cookie, String charset, HashMap<String, String> header, LuaObject callback) {
-        Http.HttpTask task = new HttpTask(url, "PUT", cookie, charset, header, callback);
+        HttpTask task = new HttpTask(url, "PUT", cookie, charset, header, callback);
         task.execute(data);
         return task;
     }
@@ -340,7 +420,7 @@ public class Http {
                 URL url = new URL(mUrl);
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(6000);
+                conn.setConnectTimeout(30000);
                 HttpURLConnection.setFollowRedirects(true);
                 conn.setDoInput(true);
                 conn.setRequestProperty("Accept-Language", "zh-cn,zh;q=0.5");
@@ -349,8 +429,6 @@ public class Http {
                     mCharset = "UTF-8";
                 conn.setRequestProperty("Accept-Charset", mCharset);
 
-                if (mCookie != null)
-                    conn.setRequestProperty("Cookie", mCookie);
 
                 if (sHeader != null) {
                     Set<Map.Entry<String, String>> entries = sHeader.entrySet();
@@ -365,6 +443,9 @@ public class Http {
                         conn.setRequestProperty(entry.getKey(), entry.getValue());
                     }
                 }
+
+                if (mCookie != null)
+                    conn.setRequestProperty("Cookie", mCookie);
 
                 if (mMethod != null)
                     conn.setRequestMethod(mMethod);
@@ -418,6 +499,7 @@ public class Http {
                                 if (idx2 == -1)
                                     idx2 = s.length();
                                 mCharset = s.substring(idx + 1, idx2);
+                                mOutCharset=mCharset;
                                 break;
                             }
                         }
@@ -439,9 +521,11 @@ public class Http {
                 try {
                     InputStream is = conn.getInputStream();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is, mCharset));
-                    String line;
+                    String line = reader.readLine();
+                    if (line != null)
+                        buf.append(line);
                     while ((line = reader.readLine()) != null && !isCancelled())
-                        buf.append(line).append('\n');
+                        buf.append('\n').append(line);
                     is.close();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -449,9 +533,11 @@ public class Http {
                 InputStream is = conn.getErrorStream();
                 if (is != null) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is, mCharset));
-                    String line;
+                    String line = reader.readLine();
+                    if (line != null)
+                        buf.append(line);
                     while ((line = reader.readLine()) != null && !isCancelled())
-                        buf.append(line).append('\n');
+                        buf.append('\n').append(line);
                     is.close();
                 }
                 return new Object[]{code, new String(buf), cok.toString(), hs};
@@ -503,12 +589,12 @@ public class Http {
                 return;
             try {
                 mCallback.call((Object[]) result);
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 try {
                     mCallback.getLuaState().getLuaObject("print").call(e.getMessage());
-                } catch (LuaError e2) {
+                } catch (LuaException e2) {
                 }
-                android.util.Log.i("lua", e.getMessage());
+                Log.i("lua", e.getMessage());
             }
         }
 

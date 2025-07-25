@@ -1,12 +1,16 @@
 package com.androlua;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.*;
 import android.content.res.*;
 import android.graphics.*;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.*;
 import android.view.*;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.*;
 import android.widget.RadioGroup.*;
 import android.widget.TextView.*;
@@ -15,7 +19,17 @@ import com.myopicmobile.textwarrior.android.*;
 import com.myopicmobile.textwarrior.common.*;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_COPY;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CUT;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_PASTE;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_SELECTION;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT;
 
 public class LuaEditor extends FreeScrollingTextField {
 
@@ -73,6 +87,28 @@ public class LuaEditor extends FreeScrollingTextField {
         array.recycle();
         setTextColor(textColor);
         setTextHighlightColor(textColorHighlight);
+        /*
+        new AsyncTask<String, String, String[]>(){
+            @Override
+            protected String[] doInBackground(String... strings) {
+                String[] cls = LuaUtil.getAllName(context, libDir);
+                for (int i = 0; i < cls.length; i++) {
+                    String cl = cls[i];
+                    int d = cl.lastIndexOf("$");
+                    if(d<0)
+                      d = cl.lastIndexOf(".");
+                    if(d>0)
+                        cls[i]=cl.substring(d);
+                }
+                 return cls;
+            }
+
+            @Override
+            protected void onPostExecute(String[] cls) {
+                addNames(cls);
+            }
+        }.execute();*/
+        PackageUtil.load(context);
     }
 
     @Override
@@ -136,11 +172,11 @@ public class LuaEditor extends FreeScrollingTextField {
     }
 
     public void setUserwordColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.NAME, color);
+        getColorScheme().setColor(ColorScheme.Colorable.LITERAL, color);
     }
 
     public void setBasewordColor(int color) {
-        getColorScheme().setColor(ColorScheme.Colorable.BASE, color);
+        getColorScheme().setColor(ColorScheme.Colorable.NAME, color);
     }
 
     public void setStringColor(int color) {
@@ -151,7 +187,7 @@ public class LuaEditor extends FreeScrollingTextField {
         getColorScheme().setColor(ColorScheme.Colorable.COMMENT, color);
     }
 
-    public void setBackgoudColor(int color) {
+    public void setBackgroundColor(int color) {
         getColorScheme().setColor(ColorScheme.Colorable.BACKGROUND, color);
     }
 
@@ -424,79 +460,12 @@ public class LuaEditor extends FreeScrollingTextField {
             _index = index;
     }
 
-    public String subStringByByte(String aString,int startIndex,int endIndex) {
-        byte[] bytes = aString.getBytes(StandardCharsets.UTF_8);
-        int subLen = endIndex - startIndex;
-        if (startIndex < 0) {
-            return "startIndex异常";
-        }
-        if (endIndex > bytes.length) {
-            return "endIndex异常";
-        }
-        if (subLen <= 0) {
-            return "startIndex或endIndex异常";
-        }
-        byte[] subBytes = new byte[subLen];
-        int i = 0;
-        while (startIndex < endIndex) {
-            subBytes[i++] = bytes[startIndex++];
-        }
-        String subString = new String(subBytes, StandardCharsets.UTF_8);
-
-        return subString;
-    }
-
     public void gotoLine(int line) {
         if (line > _hDoc.getRowCount()) {
             line = _hDoc.getRowCount();
         }
         int i = getText().getLineOffset(line - 1);
         setSelection(i);
-    }
-
-    public void gotoError(int row) {
-        String s = subStringByByte(getText().toString(),0,row);
-        int i = s.length();
-        setSelection(i);
-    }
-
-    public int getPosChars(int line,int row){
-        if (line > _hDoc.getRowCount()) {
-            line = _hDoc.getRowCount();
-        }
-        int linesize = getRowAllSize(line-1);
-        String s = subStringByByte(getText().toString(),linesize,linesize+row);
-        return s.length();
-    }
-
-    public static boolean _iserror = false;
-    public static int _errorline = 0;
-
-    public int getRowAllSize(int line){
-        if (line > _hDoc.getRowCount()) {
-            line = _hDoc.getRowCount();
-        }
-        int all = 0;
-        for(int n=0;n<line;n++){
-            all = all + _hDoc.getRowSize(n);
-        }
-        return all;
-    }
-
-    public static void set_iserror(boolean b){
-        _iserror = b;
-    }
-
-    public static void set_errorline(int line){
-        _errorline = line;
-    }
-
-    public int getRowSize(int line){
-        if (line > _hDoc.getRowCount()) {
-            line = _hDoc.getRowCount();
-        }
-        _errorline = line-1;
-        return _hDoc.getRowSize(line-1);
     }
 
     public void undo() {
@@ -593,6 +562,61 @@ public class LuaEditor extends FreeScrollingTextField {
         idx += mKeyword.length();
         moveCaret(idx);
         return true;
+    }
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public boolean performAccessibilityAction(int action, Bundle arguments) {
+
+        switch (action) {
+            case AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY:
+                switch (arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
+                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE:
+                        moveCaretDown();
+                        break;
+                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER:
+                        moveCaretRight();
+                        break;
+                }
+                return true;
+            case ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY:
+                switch (arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT)) {
+                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE:
+                        moveCaretUp();
+                        break;
+                    case AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER:
+                        moveCaretLeft();
+                        break;
+                }
+                return true;
+            case ACTION_SET_SELECTION:
+                if(arguments==null)
+                    return true;
+                int start = arguments.getInt(ACTION_ARGUMENT_SELECTION_START_INT, 0);
+                int end = arguments.getInt(ACTION_ARGUMENT_SELECTION_END_INT, 0);
+                boolean sel = arguments.getBoolean(ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN, false);
+                if (sel)
+                    setSelectionRange(start, end);
+                else
+                    setSelection(start, end);
+                return true;
+            case ACTION_SET_TEXT:
+                selectText(false);
+                if(arguments==null)
+                    setText("",true);
+                else
+                    setText(arguments.getCharSequence(ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE),true);
+                return true;
+            case ACTION_PASTE:
+                paste();
+                return true;
+            case ACTION_COPY:
+                copy();
+                return true;
+            case ACTION_CUT:
+                cut();
+                return true;
+        }
+        return super.performAccessibilityAction(action, arguments);
     }
 
 }

@@ -14,22 +14,605 @@ import "bin"
 import "autotheme"
 
 require "layout"
-activity.setTitle('DALua')
+activity.setTitle('AndroLua+')
 
 activity.setTheme(autotheme())
 
 function onVersionChanged(n, o)
     local dlg = AlertDialogBuilder(activity)
-    if not o then o = "" end
-    if not n then n = "" end
     local title = "更新" .. o .. ">" .. n
     local msg = [[
+    5.0.20
+    修复break;解析错误，
+    修复协程不能使用java对象bug，
+    
+    5.0.19
+    Http支持忽略证书错误，
+    表构建支持更多形式，
 
-    优化支持Lua 5.4.8
+    5.0.18
+    支持content导入，
+
+    5.0.17
+    task支持最大8196个线程，同步执行1024.
+
+    5.0.16
+    修复字符串编译运行时bug。
+
+    5.0.15
+    LuaBtmap支持设置http header。
+
+    5.0.14
+    修复打包出错的bug，
+    优化Http异步接口。
+
+    5.0.13
+    接口报错优化
+
+    5.0.12
+    LuaWebView增加setCookie,getCookie,getSource方法
+
+    5.0.11
+    修复9.png的算法bug。
+
+    5.0.10
+    支持LuaPreferenceFragment(t) LuaFragment(t),
+    activity.getSharedData()返回全部内容(不可修改)。
+
+    5.0.9
+    bug修复。
+
+    5.0.8
+    bug修复。
+
+    5.0.7
+    修复switch的bug。
+
+    5.0.6
+    修复bug。
+
+    5.0.5
+    修复http异步上传的bug。
+
+    5.0.4
+    修复http异步编码bug。
+
+    5.0.3
+    bug修复。
+
+    5.0.2
+    优化编辑器。
+
+    5.0.1
+    bug修复。
+
+    5.0.0
+    解决65000对象引用问题
+
+    4.4.4
+    支持变长参数。
+    bug 修复。
+
+    4.4.3
+    bug 修复。
+
+    4.4.2
+    bug 修复。
+
+    4.4.1
+    switch case 支持多个值。
+
+    4.4.0
+    bug 修复。
+
+    4.3.6
+    bug 修复。
+
+    4.3.5
+    支持有参数构建函数的虚类。
+
+    4.3.4
+    增加table.const(常量表)。
+    增加数组a=[]。
+
+    4.3.3
+    增加when(单行判断语句)。
+
+    4.3.2
+    增加bsh(测试)。
+
+    4.3.1
+    增加一些函数。
+
+    4.3.0
+    增加lambda关键字。
+    增加defer延时执行。
+    增加toclose自关闭局部变量，变量名前加*。
+
+    4.2.6
+    os.date支持64位时间。
+
+    4.2.5
+    io增加部分函数。
+
+    4.2.4
+    table增加部分函数。
+
+    4.2.3
+    增加luajava.override。
+    增加使用关键字作table的key。
+
+    4.2.2
+    修复setSharedData bug。
+
+    4.2.1
+    优化多维数组。
+    增加luajava.astable(obk,true)深转换。
+
+    4.2.0
+    支持虚类。
+
+    4.1.9
+    优化Http返回值。
+
+    4.1.8
+    优化HorizontalListView。
+    布局表支持GIF背景图设置。
+
+    4.1.7
+    优化HorizontalListView。
+    优化日志查看。
+
+    4.1.6
+    增加activity.stopService()方法。
+    修复activity.startService()方法。
+
+    4.1.5
+    增加activity.getLuaResources()方法。
+    优化LuaResources。
+
+    4.1.4
+    增加androlua://package name/path?key=value uri支持。
+
+    4.1.3
+    修复FileProvider bug。
+    修复LuaBitmapDrawable bug。
+    最近任务可变标题与图标。
+    第一次运行获得权限。
+
+    4.1.2
+    setter支持多个参数。
+
+    4.1.1
+    Http post增加一些方法。
+    浮点数比较使用近似值。
+
+    4.1.0
+    适配安卓P。
+
+    4.0.25
+    增加LuaBitmapDrawable，支持jpg，png，gif，bmp等。
+    支持设置网络图片缓存时间。
+
+    4.0.24
+    优化强制类型处理。
+    优化错误信息。
+
+    4.0.23
+    优化HorizontalListView。
+    可以省略所有仅使用Context的构建方法的参数。
+
+    4.0.22
+    优化PageView,增加PageAdapter。
+    增加HorizontalListView。
+
+    4.0.21
+    优化task最多支持1024线程，128并行。
+
+    4.0.20
+    一些更新。
+
+    4.0.19
+    修复格式化bug。
+    LuaEditor增加addPackage方法。
+
+    4.0.18
+    省略Dialog的context参数。
+
+    4.0.17
+    修复获取内部类缓存bug。
+
+    4.0.16
+    修复高亮异常。
+
+    4.0.15
+    修复setter参数为table时意外错误的bug。
+
+    4.0.14
+    增加LuaPreferenceFragment。
+
+    4.0.13
+    修复bug。
+
+    4.0.12
+    编辑器增加块区间线。
+
+    4.0.11
+    优化自动换行。
+    优化高亮。
+
+    4.0.10
+    优化自动换行。
+    优化LuaAdapter。
+
+    4.0.9
+    优化getter/setter效率。
+    优化单参数无参数方法效率。
+
+    4.0.8
+    优化布局助手。
+    优化布局表对style支持。
+
+    4.0.7
+    优化LuaDialog。
+    增加多属性赋值语句。
+
+    4.0.6
+    修复第一次初始化过慢bug。
+
+    4.0.5
+    增加设置luaExtDir方法。
+    修复部分bug。
+
+    4.0.4
+    优化lua字符串U码使用。
+    支持鼠标滚轮滚动。
+    修复部分bug。
+
+    4.0.3
+    兼容旧版main入口。
+    增加luajava.getContext()函数。
+    activity增加部分api。
+    修复部分bug。
+
+    4.0.2
+    修复部分bug。
+
+    4.0.1
+    优化import对环境影响。
+    修复部分bug。
+
+    4.0.0
+    升级为lua 5.4随机数算法。
+    修复lua部分bug。
+
+    4.0.0 rc4
+    增加__type元方法。
+    修复switch case bug。
+
+    4.0.0 rc3
+    增加continue。
+
+    4.0.0 rc2
+    一些优化。
+
+    4.0.0 alpha4
+    使用增强的utf8模块。
+    增加简化lambda表达式。
+
+    4.0.0 alpha3
+    优化switch case。
+
+    4.0.0 alpha2
+    可选择省略then do。
+    增加switch case。
+
+    4.0.0 rc1
+    修复activity缓存的bug。
+
+    4.0.0 beta4
+    修复载入dex缓存的bug。
+
+    4.0.0 beta3
+    模拟滑动支持指定path
+    bug修复。
+
+    4.0.0 beta2
+    修复打包不能安装bug。
+
+    4.0.0 beta
+    修复安卓8不能打包bug。
+
+    4.0.0 alpha
+    优化辅助功能，支持监听按键，模拟点击，模拟触摸，截图等功能。
+    增加ColorFinder类，用于颜色查找。
+    修复loadbitmap分辨率异常的bug。
+
+    3.6.5
+    修复参数转换bug。
+
+    3.6.4
+    修复导入分析不能的bug。
+    修复执行子目录文件的bug。
+    支持画中画模式。
+    修复适配器搜索的bug。
+
+    3.6.3
+    修复参数转换bug。
+
+    3.6.2
+    适配全面屏。
+    支持分屏。
+    增加getUriForPath/getUriForFile方法。
+    增强超级辅助。
+
+    3.6.1
+    优化辅助功能超级辅助。
+
+    3.6.0
+    修复finish activity可能导致程序退出的bug。
+    修复运行内嵌子工程引用目录混乱的bug。
+    增强辅助功能超级辅助。
+
+    3.5.9
+    修复华为看不到log的bug。
+    追加适配器过滤器。
+    增加辅助功能超级辅助。
+
+    3.5.8
+    修复bug。
+
+    3.5.7
+    修复子目录导入bug。
+
+    3.5.6
+    增加LuaContentObserver。
+
+    3.5.5
+    增加LuaFileObserver。
+
+    3.5.4
+    增加getActivity方法。
+
+    3.5.3
+    增加LuaServer/LuaClient。
+    bug修复。
+
+    3.5.2
+    修复异步Http不能获取错误请求详细信息的bug。
+    import增加一次导入多个包功能。
+
+    3.5
+    增加代码加密。
+
+    3.4.5
+    增加多窗口功能。
+
+    3.4.3
+    增加与活动文件同名函数回调，方便处理传入参数。
+    修复统计sdk读取app id一处bug。
+
+    3.4.2
+    增加百度移动统计与错误反馈。
+    bug修复。
+
+    3.4.1
+    增加共享数据getSharedData/setSharedData方法。
+    bug修复。
+
+    3.4.0
+    增加LuaResources。
+
+    3.3.5
+    增加辅助功能回调函数onAccessibilityEvent。
+    修复bug。
+    3.3.4
+
+    增加LuaMultiAdapter适配器。
+    优化RippleLayout。
+    回滚编辑器实现。
+    支持修改工程版本号和SDK版本。
+    支持设置关联文件。
+    优化权限选择提示。
+    修复bug。
+
+    3.3.3
+    增加打包时编译自带模块。
+    优化RippleLayout效果。
+    优化编辑器高亮解析速度。
+    优化PullingLayout效果。
+    优化LuaDrawable和LuaAnimation实现。
+    getter支持isxxx简写。
+    LuaWebView支持打开第三方应用。
+    LuaWebView支持处理SSL错误。
+    bug修复。
+
+    3.3.2
+    增加LuaDialog。
+    修复RippleLayout连续点击效果异常的bug。
+    修复部分工程不能导入布局的bug。
+    增加方法调用时函数自动转为接口。
+
+    3.3.1
+    增加RippleLayout圆形扩散效果。
+    修复布局助手不能查看子视图的bug。
+
+    3.3
+    优化setter效率提高800%。
+    优化适配器数据格式，支持首字母小写。
+    优化编辑器效率。
+    更新帮助。
+    bug修复。
+
+    3.2.6
+    优化setter/getter，支持首字母小写。
+    优化异步Http多线程。
+    优化异步task多线程。
+    优化LuaArrayAdapter图片显示效果。
+    优化编辑器。
+    修复LuaUtil.zip压缩文件错误的bug。
+    优化bmob用户登录。
+    bug修复。
+
+    3.2.5
+    去除无用权限。
+    优化编辑器。
+    优化RippleLayout效果。
+    优化错误信息。
+    LuaContext增加getGlobalData()方法。
+    修复LuaThread函数调用两次的bug。
+    增强loadlayout容错。
+    增加导入分析。
+    修复安卓7.x打包bug。
+    bug修复。
+    
+    3.2.4
+    修复悬浮窗焦点切换无效的bug。
+    
+    3.2.3
+    关联alp文件。
+    增加简单test功能。
+    修复bug。
+    
+    3.2.2
+    优化FloatWindow焦点切换。
+    修复bug。
+    
+    3.2.1
+    增加RippleLayout。
+    增加LuaExpandableListAdapter适配器。
+    优化ToolBar显示效果。
+    修复垃圾回收bug。
+    修复jar资源加载异常的bug。
+    
+    3.2
+    更新Lua5.3.3。
+    增加onVersionChanged回调函数。
+    增加onResult回调函数。
+    优化搜索选中效果。
+    增加ide支持高亮与补全Java类。
+    修复横竖屏切换bug。
+    增加Http异步网络模块。
+    修复在最左边删除，看不到待删除字符的问题。
+    修复ToolBar不能设置空白标题的bug。
+    优化PageLayouts与SlidingLayout.
+    增加PullingLayout布局。
+    增加线程自动回收机制。
+    增加PageView。
+    增加LuaFragment。
+    增加级联风格调用。
+    修复未实现接口函数调用出错的bug。
+    增加支持自动导入libs目录so模块。
+    增加支持TextView跑马灯。
+    修复加载dex异常的bug。
+    增加设置壁纸权限。
+    优化task用法，自动导入外部代码导入的包与类。
+    优化启动闪图逻辑。
+    增加启动图不全屏时，自动适应空白区域颜色。
+    优化内核，性能提高40%。
+    优化打开工程逻辑。
+    打开工程支持搜索。
+    增加比例尺寸。
+    优化log显示效果。
+    优化第一次启动闪图效果。
+    增加ide最近打开功能。
+    增加记录最近打开文件光标位置功能。
+    更新帮助。
+
+    3.1
+    增加可视布局设计器，
+    升级内核，速度提高20%，
+    http模块支持自定义UA与header
+    优化luajava错误提示，
+    增加工程导出/导入，
+    修复打开文件的bug，
+    增加后台服务，
+    优化错误提示，
+    修复类型转换bug，
+    增加Ticker主线程回调定时器，
+    编辑器自动夜间模式，
+    编辑器支持自定义配色，
+    增加导入dex函数，
+    loadbitmap加载网络图片支持本地缓存，
+    LuaArrayAdapter和LuaAdapter适配器支持异步加载图片与缓存，
+    增加Java方法浏览器，
+    增加导包提示，
+
+    3.0.0
+    支持打包apk的权限配置，
+    增加Map对象的简洁使用，
+    完善luajavaa.astable函数，全面支持array List Map，
+    增加在方法调用时Lua表自动转换为Java数组或接口，
+    增加LuaArrayAdapter和LuaAdapter适配器，
+    LuaWebView支WebClient，在js调用Lua函数，
+    timer支持设置时间间隔，
+    newActivity支持传递参数，
+    http增加download和upload，
+    日志支持清除，
+    Java方法支持table与array，map与interface自动转换，
+    增强取长度运算符，可以获取Java对象大小，
+    更换运行方式，
+    支持打包文件夹，
+    打包自动分析使用的c模块，
+    增加tointeger函数，
+    setContentView支持布局表参数，
+
+    2.1.0
+    去除广告，欢迎捐赠，
+    修复接口方法错误无法显示错误信息的问题，
+    修复import函数一处逻辑错误，
+    修复onKeyDown等回调方法不能返回值的bug，
+    优化luajava性能，
+    优化IDE编辑器性能，
+    修复IDE打开文件bug，
+    增加setXXXListener控件事件快速设置，
+    重写task与thread函数
+    增加timer函数，
+    修复数字类型转换bug，
+    增加查看logcat输出功能，
+    布局表支持绝对布局，
+    布局表支持ListView预设项目，
+    布局表支持style属性，
+    布局表支持?android获取系统资源，
+    修复astable索引0的bug，
+    IDE增加函数导航，
+    IDE增加搜索与转到，
+
+    2.0.4
+    增加luajava.astable方法，
+    增加each与enum迭代器
+    布局表支持相对布局，
+    布局表gravity属性支持或( | )操作，
+    优化IDE逻辑，
+
+    2.0.3
+    修复IDE布局bug
+
+    2.0.2
+    增加getter与setter快速调用，用于简化控件属性设置，
+    修复Java方法返回null没有返回值的bug，
+    更新布局表算法，支持布局间距，
+    优化Java方法缓存机制，效率提高一倍，布局表效率提高8倍，
+
+    2.0.1
+    布局表增加自绘制背景，
+    修复自动缩进算法错误，
+    增加百度广告，仅在打包时出现，不影响使用，希望大家支持，
+
+    2.0
+    更新Lua5.3.1，
+    更新luajava3.0，
+    增加打包apk功能，
+    增加布局表，
+    增加线程，
+    增加更多回调方法，
+    更新支持高亮，自动缩进，自动补全编辑器，
+
+    更多请参考帮助
 
   ]]
     if o == "" then
-        title = "欢迎使用DALua " .. n
+        title = "欢迎使用AndroLua+ " .. n
         msg = [[
     AndroLua+是由nirenr开发的在安卓使用Lua语言开发应用的工具，该项目基于开源项目luajava和AndroLua优化加强，修复了原版的bug，并加入了很多新的特性，使开发更加简单高效，使用该软件完全免费，如果你喜欢这个项目欢迎捐赠或者宣传他。
     在使用之前建议详细阅读程序自带帮助文档。
@@ -66,7 +649,7 @@ end
 local theme
 if h <= 6 or h >= 22 then
     theme = activity.getLuaExtDir("fonts") .. "/night.lua"
-  else
+else
     theme = activity.getLuaExtDir("fonts") .. "/day.lua"
 end
 if not ext(theme) then
@@ -76,7 +659,7 @@ end
 local function day()
     if version >= 21 then
         return (android.R.style.Theme_Material_Light)
-      else
+    else
         return (android.R.style.Theme_Holo_Light)
     end
 end
@@ -84,7 +667,7 @@ end
 local function night()
     if version >= 21 then
         return (android.R.style.Theme_Material)
-      else
+    else
         return (android.R.style.Theme_Holo)
     end
 end
@@ -95,10 +678,10 @@ if e then
         if k == "theme" then
             if v == "day" then
                 activity.setTheme(day())
-              elseif v == "night" then
+            elseif v == "night" then
                 activity.setTheme(night())
             end
-          else
+        else
             layout.main[2][k] = v
         end
     end
@@ -106,13 +689,14 @@ end
 activity.getWindow().setSoftInputMode(0x10)
 
 --activity.getActionBar().show()
-history = {}
+
 luahist = luajava.luadir .. "/lua.hist"
 luadir = luajava.luaextdir .. "/" or "/sdcard/androlua/"
 luaconf = luajava.luadir .. "/lua.conf"
 luaproj = luajava.luadir .. "/lua.proj"
 pcall(dofile, luaconf)
 pcall(dofile, luahist)
+history = history or {}
 luapath = luapath or luadir .. "new.lua"
 luadir = luapath:match("^(.-)[^/]+$")
 pcall(dofile, luaproj)
@@ -141,7 +725,7 @@ import "android.os.*"
 import "android.widget.*"
 import "android.view.*"
 import "layout"
---activity.setTitle('DALua')
+--activity.setTitle('AndroLua+')
 --activity.setTheme(android.R.style.Theme_Holo_Light)
 activity.setContentView(loadlayout(layout))
 ]]
@@ -169,109 +753,106 @@ user_permission={
 local BitmapDrawable = luajava.bindClass("android.graphics.drawable.BitmapDrawable")
 m = {
     { MenuItem,
-        title = "打开",
-        id = "file_open",},
+      title = "运行",
+      id = "play",
+      icon = "play", },
     { MenuItem,
+      title = "撤销",
+      id = "undo",
+      icon = "undo", },
+    { MenuItem,
+      title = "重做",
+      id = "redo",
+      icon = "redo", },
+    { MenuItem,
+      title = "打开",
+      id = "file_open", },
+    { MenuItem,
+      title = "最近",
+      id = "file_history", },
+    { SubMenu,
+      title = "文件...",
+      { MenuItem,
         title = "保存",
-        id = "file_save2", },
-    { MenuItem,
-        title = "运行",
-        id = "play",
-        icon = "play", },
-    { MenuItem,
-        title = "撤销",
-        id = "undo",
-        icon = "undo", },
-    { MenuItem,
-        title = "重做",
-        id = "redo",
-        icon = "redo", },
-    { MenuItem,
-        title = "最近",
-        id = "file_history", },
-    { SubMenu,
-        title = "文件...",
-        { MenuItem,
-            title = "保存",
-            id = "file_save", },
-        { MenuItem,
-            title = "新建",
-            id = "file_new", },
-        { MenuItem,
-            title = "编译",
-            id = "file_build", },
+        id = "file_save", },
+      { MenuItem,
+        title = "新建",
+        id = "file_new", },
+      { MenuItem,
+        title = "编译",
+        id = "file_build", },
     },
     { SubMenu,
-        title = "工程...",
-        { MenuItem,
-            title = "打开",
-            id = "project_open", },
-        { MenuItem,
-            title = "打包",
-            id = "project_build", },
-        { MenuItem,
-            title = "新建",
-            id = "project_create", },
-        { MenuItem,
-            title = "导出",
-            id = "project_export", },
-        { MenuItem,
-            title = "属性",
-            id = "project_info", },
+      title = "工程...",
+      { MenuItem,
+        title = "打开",
+        id = "project_open", },
+      { MenuItem,
+        title = "打包",
+        id = "project_build", },
+      { MenuItem,
+        title = "新建",
+        id = "project_create", },
+      { MenuItem,
+        title = "导出",
+        id = "project_export", },
+      { MenuItem,
+        title = "属性",
+        id = "project_info", },
     },
     { SubMenu,
-        title = "代码...",
-        { MenuItem,
-            title = "格式化",
-            id = "code_format", },
-        { MenuItem,
-            title = "导入分析",
-            id = "code_import", },
-        { MenuItem,
-            title = "查错",
-            id = "code_check", },
+      title = "代码...",
+      { MenuItem,
+        title = "格式化",
+        id = "code_format", },
+      { MenuItem,
+        title = "导入分析",
+        id = "code_import", },
+      { MenuItem,
+        title = "查错",
+        id = "code_check", },
     },
     { SubMenu,
-        title = "转到...",
-        { MenuItem,
-            title = "搜索",
-            id = "goto_seach", },
-        { MenuItem,
-            title = "转到",
-            id = "goto_line", },
-        { MenuItem,
-            title = "导航",
-            id = "goto_func", },
+      title = "转到...",
+      { MenuItem,
+        title = "搜索",
+        id = "goto_seach", },
+      { MenuItem,
+        title = "转到",
+        id = "goto_line", },
+      { MenuItem,
+        title = "导航",
+        id = "goto_func", },
     },
     { MenuItem,
-        title = "插件...",
-        id = "plugin", },
+      title = "插件...",
+      id = "plugin", },
     { SubMenu,
-        title = "更多...",
-        { MenuItem,
-            title = "布局助手",
-            id = "more_helper", },
-        { MenuItem,
-            title = "日志",
-            id = "more_logcat", },
-        { MenuItem,
-            title = "Java浏览器",
-            id = "more_java", },
-        { MenuItem,
-            title = "帮助",
-            id = "more_help", },
-        { MenuItem,
-            title = "手册",
-            id = "more_manual", },
-        { MenuItem,
-            title = "支持作者",
-            id = "more_donation", },
-        { MenuItem,
-            title = "联系作者",
-            id = "more_qq", },
-        { MenuItem,
-            title = "关于",
-            id = "more_about", },
+      title = "更多...",
+      { MenuItem,
+        title = "布局助手",
+        id = "more_helper", },
+      { MenuItem,
+        title = "日志",
+        id = "more_logcat", },
+      { MenuItem,
+        title = "Java浏览器",
+        id = "more_java", },
+      { MenuItem,
+        title = "帮助",
+        id = "more_help", },
+      { MenuItem,
+        title = "手册",
+        id = "more_manual", },
+      { MenuItem,
+        title = "支持作者",
+        id = "more_donation", },
+      { MenuItem,
+        title = "联系作者",
+        id = "more_qq", },
+      { MenuItem,
+        title = "关于",
+        id = "more_about", },
     },
 }
 optmenu = {}
@@ -357,9 +938,12 @@ function read(path)
     end
     local str = f:read("*all")
     f:close()
-    if string.byte(str) == 0x1b then
+    if str~="" then
+    local c=string.byte(str);
+    if  c <= 0x1c and c>= 0x1a and c!=" " and c!="\t" then
         Toast.makeText(activity, "不能打开已编译文件." .. path, Toast.LENGTH_LONG ).show()
         return
+    end
     end
     editor.setText(str)
 
@@ -372,7 +956,7 @@ function read(path)
     for n = 2, #history do
         if n > 50 then
             history[n] = nil
-          elseif history[n] == luapath then
+        elseif history[n] == luapath then
             table.remove(history, n)
         end
     end
@@ -400,7 +984,7 @@ function read(path)
         activity.getActionBar().setSubtitle(path:sub(#luaproject))
         write(luaproj, string.format("luaproject=%q", luaproject))
         --Toast.makeText(activity, "打开工程."..p.appname, Toast.LENGTH_SHORT ).show()
-      else
+    else
         activity.setTitle("AndroLua+")
         luaproject = nil
         write(luaproj, "luaproject=nil")
@@ -413,7 +997,7 @@ function write(path, str)
     if sw then
         sw:write(str)
         sw:close()
-      else
+    else
         Toast.makeText(activity, "保存失败." .. path, Toast.LENGTH_SHORT ).show()
     end
     return str
@@ -434,6 +1018,10 @@ function save()
     return src
 end
 
+function click(s)
+    func[s.getText()]()
+end
+
 function create_lua()
     luapath = luadir .. create_e.getText().toString() .. ".lua"
     if not pcall(read, luapath) then
@@ -444,7 +1032,7 @@ function create_lua()
         editor.setText(code)
         write(luaconf, string.format("luapath=%q", luapath))
         Toast.makeText(activity, "新建文件." .. luapath, Toast.LENGTH_SHORT ).show()
-      else
+    else
         Toast.makeText(activity, "打开文件." .. luapath, Toast.LENGTH_SHORT ).show()
     end
     write(luaconf, string.format("luapath=%q", luapath))
@@ -456,9 +1044,9 @@ function create_dir()
     luadir = luadir .. create_e.getText().toString() .. "/"
     if File(luadir).exists() then
         Toast.makeText(activity, "文件夹已存在." .. luadir, Toast.LENGTH_SHORT ).show()
-      elseif File(luadir).mkdirs() then
+    elseif File(luadir).mkdirs() then
         Toast.makeText(activity, "创建文件夹." .. luadir, Toast.LENGTH_SHORT ).show()
-      else
+    else
         Toast.makeText(activity, "创建失败." .. luadir, Toast.LENGTH_SHORT ).show()
     end
 end
@@ -473,7 +1061,7 @@ function create_aly()
         editor.setText(lcode)
         write(luaconf, string.format("luapath=%q", luapath))
         Toast.makeText(activity, "新建文件." .. luapath, Toast.LENGTH_SHORT ).show()
-      else
+    else
         Toast.makeText(activity, "打开文件." .. luapath, Toast.LENGTH_SHORT ).show()
     end
     write(luaconf, string.format("luapath=%q", luapath))
@@ -481,71 +1069,29 @@ function create_aly()
     --create_dlg.hide()
 end
 
-function successed(msg)
-    import "android.app.*"
-    import "android.os.*"
-    import "android.widget.*"
-    import "android.view.*"
-    import "com.androlua.*"
-    import "java.io.*"
-    import "android.text.method.*"
-    import "android.net.*"
-    import "android.content.*"
-    import "android.graphics.drawable.*"
-    import "java.util.zip.*"
-    import "java.util.*"
-    import "java.lang.*"
-    import "android.*"
-    import "java.io.File"
-    local open_dlg = AlertDialogBuilder(activity)
-    open_dlg.setTitle("提示！")
-    open_dlg.Message = msg
-    open_dlg.setPositiveButton("确定", nil)
-    open_dlg.setNeutralButton("取消",nil)
-    open_dlg.show()
-end
-
-function formatPath(s)
-    local p = s
-    if p:sub(#p,#p) == "/" then
-        return p
-      else
-        return p.."/"
-    end
-end
-
 function open(p)
     if p == luadir then
         return nil
     end
-    if File(open_title.getText()).isFile() then
-        luadir = File(open_title.getText()).getParentFile().getAbsolutePath()
-        luadir = formatPath(luadir)
-        list(listview,luadir)
-      elseif p:find("%.%./") then
+    if p:find("%.%./") then
         luadir = luadir:match("(.-)[^/]+/$")
-        if luadir == "/" then
-            luadir = "/sdcard/"
-            successed("到顶了")
-        end
         list(listview, luadir)
-      elseif p:find("/") then
+    elseif p:find("/") then
         luadir = luadir .. p
         list(listview, luadir)
-      elseif p:find("%.alp$") then
+    elseif p:find("%.alp$") then
         imports(luadir .. p)
         open_dlg.hide()
-      else
+    else
         read(luadir .. p)
         open_dlg.hide()
-        open_dlg = nil
     end
 end
 
 function sort(a, b)
     if string.lower(a) < string.lower(b) then
         return true
-      else
+    else
         return false
     end
 end
@@ -555,7 +1101,6 @@ function adapter(t)
 end
 
 function list(v, p)
-    import "java.io.File"
     local f = File(p)
     if not f then
         open_title.setText(p)
@@ -577,7 +1122,7 @@ function list(v, p)
         local name = fs[n].getName()
         if fs[n].isDirectory() then
             table.insert(td, name .. "/")
-          elseif name:find("%.lua$") or name:find("%.aly$") or name:find("%.alp$") or name:find("%.txt$") then
+        elseif name:find("%.lua$") or name:find("%.aly$") or name:find("%.alp$") then
             table.insert(tf, name)
         end
     end
@@ -587,6 +1132,8 @@ function list(v, p)
         table.insert(td, v)
     end
     open_title.setText(p)
+    --local adapter=ArrayAdapter(activity,android.R.layout.simple_list_item_1, String(td))
+    --v.setAdapter(adapter)
     open_dlg.setItems(td)
 end
 
@@ -618,7 +1165,7 @@ function export(pdir)
     if e then
         if p.mode then
             tmp = string.format("%s/%s_%s_%s-%s.%s", activity.getLuaExtDir("backup"), p.appname,p.mode, p.appver:gsub("%.", "_"), date,p.ext or "alp")
-          else
+        else
             tmp = string.format("%s/%s_%s-%s.%s", activity.getLuaExtDir("backup"), p.appname, p.appver:gsub("%.", "_"), date,p.ext or "alp")
         end
     end
@@ -632,7 +1179,7 @@ function export(pdir)
         for n = 0, #ls - 1 do
             local name = ls[n].getName()
             if name:find("%.apk$") or name:find("%.luac$") or name:find("^%.") then
-              elseif p.mode and name:find("%.lua$") and name ~= "init.lua" then
+            elseif p.mode and name:find("%.lua$") and name ~= "init.lua" then
                 local ff=io.open(ls[n].Path)
                 local ss=ff:read("a")
                 ff:close()
@@ -648,10 +1195,10 @@ function export(pdir)
                     out.putNextEntry(entry)
                     copy(FileInputStream(File(path)), out)
                     os.remove(path)
-                  else
+                else
                     error(err)
                 end
-              elseif p.mode and name:find("%.aly$") then
+            elseif p.mode and name:find("%.aly$") then
                 name = name:gsub("aly$", "lua")
                 local path, err = console.build_aly(ls[n].Path)
                 if path then
@@ -659,12 +1206,12 @@ function export(pdir)
                     out.putNextEntry(entry)
                     copy(FileInputStream(File(path)), out)
                     os.remove(path)
-                  else
+                else
                     error(err)
                 end
-              elseif ls[n].isDirectory() then
+            elseif ls[n].isDirectory() then
                 addDir(out, dir .. name .. "/", ls[n])
-              else
+            else
                 entry = ZipEntry(dir .. name)
                 out.putNextEntry(entry)
                 copy(FileInputStream(ls[n]), out)
@@ -685,7 +1232,7 @@ function export(pdir)
     return tmp
 end
 
-function getalpinfo(path)
+function getalpinfo(path,data)
     local app = {}
     loadstring(tostring(String(LuaUtil.readZip(path, "init.lua"))), "bt", "bt", app)()
     local str = string.format("名称: %s\
@@ -694,23 +1241,24 @@ function getalpinfo(path)
 作者: %s\
 说明: %s\
 路径: %s",
-    app.appname,
-    app.appver,
-    app.packagename,
-    app.developer,
-    app.description,
-    path
+            app.appname,
+            app.appver,
+            app.packagename,
+            app.developer,
+            app.description,
+            data
     )
     return str, app.mode
 end
 
-function imports(path)
+function imports(path,data)
     create_imports_dlg()
+    imports_path=path
     local mode
-    imports_dlg.Message, mode = getalpinfo(path)
+    imports_dlg.Message, mode = getalpinfo(path,data)
     if mode == "plugin" or path:match("^([^%._]+)_plugin") then
         imports_dlg.setTitle("导入插件")
-      elseif mode == "build" or path:match("^([^%._]+)_build") then
+    elseif mode == "build" or path:match("^([^%._]+)_build") then
         imports_dlg.setTitle("打包安装")
     end
     imports_dlg.show()
@@ -739,7 +1287,7 @@ function importx(path, tp)
 
     if tp == "build" then
         out = activity.getLuaExtDir("bin/.temp") .. "/" .. s
-      elseif tp == "plugin" then
+    elseif tp == "plugin" then
         out = activity.getLuaExtDir("plugin") .. "/" .. s
     end
     local d = File(out)
@@ -767,7 +1315,7 @@ function importx(path, tp)
             if not tmp.exists() then
                 tmp.mkdirs()
             end
-          else
+        else
             copy(zip.getInputStream(entry), FileOutputStream(out .. name))
         end
     end
@@ -786,7 +1334,7 @@ function importx(path, tp)
     if tp == "build" then
         bin(out)
         return out
-      elseif tp == "plugin" then
+    elseif tp == "plugin" then
         Toast.makeText(activity, "导入插件." .. s, Toast.LENGTH_SHORT ).show()
         return out
     end
@@ -804,14 +1352,13 @@ func.open = function()
     list(listview, luadir)
     open_dlg.show()
 end
-func["打开文件"] = func.open
 func.new = function()
     save()
     create_create_dlg()
     create_dlg.setMessage(luadir)
     create_dlg.show()
 end
-func["新建文件"] = func.new
+
 func.history = function()
     save()
     create_open_dlg2()
@@ -819,13 +1366,12 @@ func.history = function()
     open_edit.Text = ""
     open_dlg2.show()
 end
-func["历史记录"] = func.history
+
 func.create = function()
     save()
     create_project_dlg()
     project_dlg.show()
 end
-func["新建工程"] = func.create
 func.openproject = function()
     save()
     activity.newActivity("project")
@@ -835,22 +1381,22 @@ func.openproject = function()
       open_edit.Text=""
       open_dlg2.show()]]
 end
-func["打开工程"] = func.openproject
+
 func.export = function()
     save()
     if luaproject then
         local name = export(luaproject)
         Toast.makeText(activity, "工程已导出." .. name, Toast.LENGTH_SHORT ).show()
-      else
+    else
         Toast.makeText(activity, "仅支持工程导出.", Toast.LENGTH_SHORT ).show()
     end
 end
-func["导出工程"] = func.export
+
 func.save = function()
     save()
     Toast.makeText(activity, "文件已保存." .. luapath, Toast.LENGTH_SHORT ).show()
 end
-func["保存文件"] = func.save
+
 func.play = function()
     if func.check(true) then
         return
@@ -858,23 +1404,19 @@ func.play = function()
     save()
     if luaproject then
         activity.newActivity(luaproject .. "main.lua")
-      else
+    else
         activity.newActivity(luapath)
     end
 end
-func["执行"] = func.play
 func.undo = function()
     editor.undo()
 end
-func["撤销"] = func.undo
 func.redo = function()
     editor.redo()
 end
-func["恢复"] = func.redo
 func.format = function()
     editor.format()
 end
-func["格式化"] = func.format
 func.check = function(b)
     local src = editor.getText()
     src = src.toString()
@@ -882,73 +1424,16 @@ func.check = function(b)
         src = "return " .. src
     end
     local _, data = loadstring(src)
+
     if data then
-        _,_,u1,u2=data:find("(.+), description:(.+)")
-        if u1 then
-            _,_,tokpos,line=u1:find("tokenpos: (%d+), Line: (%d+)")
-            local row = tokpos + editor.getRowSize(tonumber(line))-editor.getRowAllSize(tonumber(line))
-            editor.set_iserror(true);
-            _,_,u3,u4=u2:find(".:(%d+):(.+)$")
-            data = "    Line: "..line..", Row: "..row.." error: "..u4
-        end
+        local _, _, line, data = data:find(".(%d+).(.+)")
         editor.gotoLine(tonumber(line))
-        Toast.makeText(activity, data, Toast.LENGTH_SHORT ).show()
+        Toast.makeText(activity, line .. ":" .. data, Toast.LENGTH_SHORT ).show()
         return true
-      elseif b then
-      else
-        editor.set_iserror(false);
+    elseif b then
+    else
         Toast.makeText(activity, "没有语法错误", Toast.LENGTH_SHORT ).show()
     end
-end
-error_e_line = 0;
-error_e_row = 0;
-func.goto_error = function()
-    local erow = error_e_row
-    local eline = error_e_line
-    if(erow and eline)then
-        Toast.makeText(activity, "正在跳转", Toast.LENGTH_SHORT ).show()
-        editor.gotoError(tonumber(erow))
-    end
-end
-
-func["跳转报错"] = func.goto_error
-
-function check()
-    editor.set_iserror(false);
-    errormes.Text = "    无语法错误"
-    local src = editor.getText()
-    src = tostring(src)
-    local _, data = loadstring(src)
-    if data then
-        _,_,u1,u2=data:find("(.+), description:(.+)")
-        if u1 then
-            _,_,tokpos,line,token=u1:find("tokenpos: (%d+), Line: (%d+), LastToken: (.+)$")
-            local row = tokpos + editor.getRowSize(tonumber(line))-editor.getRowAllSize(tonumber(line))
-            editor.set_iserror(true);
-            _,_,u3,u4=u2:find(".:(%d+):(.+)$")
-            error_e_line = line;
-            error_e_row = tokpos;
-            charss = editor.getPosChars(tonumber(line),tonumber(row))
-            if #token >= 10 then
-                token = token:sub(1,10).."..."
-            end
-            if #u4 >= 30 then
-                u4 = u4:sub(1,30).."..."
-            end
-            errormes.Text = "    Line: "..line..", Row: "..row..", Chars: "..charss..", Token: "..token.."\n    error: "..u4
-          else
-            errormes.Text = data
-        end
-      else
-        error_e_line = nil
-        error_e_row = nil
-        editor.set_iserror(false);
-        errormes.Text = "    无语法错误"
-    end
-end
-
-function ckt()
-    call("check")
 end
 
 func.navi = function()
@@ -967,25 +1452,25 @@ func.navi = function()
     navi_list.setAdapter(adapter)
     navi_dlg.show()
 end
-func["导航"] = func.navi
+
 func.seach = function()
     editor.search()
 end
-func["搜索"] = func.seach
+
 func.gotoline = function()
     editor.gotoLine()
 end
-func["跳行"] = func.gotoline
+
 func.luac = function()
     save()
     local path, str = console.build(luapath)
     if path then
         Toast.makeText(activity, "编译完成: " .. path, Toast.LENGTH_SHORT ).show()
-      else
+    else
         Toast.makeText(activity, "编译出错: " .. str, Toast.LENGTH_SHORT ).show()
     end
 end
-func["编译"] = func.luac
+
 func.build = function()
     save()
     if not luaproject then
@@ -994,7 +1479,7 @@ func.build = function()
     end
     bin(luaproject .. "/")
 end
-func["打包"] = func.build
+
 buildfile = function()
     Toast.makeText(activity, "正在打包..", Toast.LENGTH_SHORT ).show()
     task(bin, luaPath.getText().toString(), appName.getText().toString(), appVer.getText().toString(), packageName.getText().toString(), apkPath.getText().toString(), function(s)
@@ -1009,11 +1494,11 @@ func.info = function()
     end
     activity.newActivity("projectinfo", { luaproject })
 end
-func["工程信息"] = func.info
+
 func.logcat = function()
     activity.newActivity("logcat")
 end
-func["日志"] = func.logcat
+
 func.help = function()
     activity.newActivity("help")
 end
@@ -1021,7 +1506,7 @@ end
 func.java = function()
     activity.newActivity("javaapi/main")
 end
-func["JavaAPI"] = func.java
+
 func.manual = function()
     activity.newActivity("luadoc")
 end
@@ -1031,14 +1516,31 @@ func.helper = function()
     isupdate = true
     activity.newActivity("layouthelper/main", { luaproject, luapath })
 end
-func["布局助手"] = func.helper
-func.donation = function()
 
+func.donation = function()
+    xpcall(function()
+        local url = "alipayqr://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=https://qr.alipay.com/apt7ujjb4jngmu3z9a"
+        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    end,
+            function()
+                local url = "https://qr.alipay.com/apt7ujjb4jngmu3z9a";
+                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            end)
 end
 
+key2 = [[N_9Rrnm8jJcdcXs7TQsXQBVA8Liq8mhU]]
+
+key = [[QRDW1jiyM81x-T8RMIgeX1g_v76QSo6a]]
+function joinQQGroup(key)
+    import "android.content.Intent"
+    import "android.net.Uri"
+    local intent = Intent();
+    intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" .. key));
+    activity.startActivity(intent);
+end
 
 func.qq = function()
-
+    joinQQGroup(key)
 end
 
 func.about = function()
@@ -1049,7 +1551,7 @@ func.fiximport = function()
     save()
     activity.newActivity("javaapi/fiximport", { luaproject, luapath })
 end
-func["导入分析"] = func.fiximport
+
 func.plugin = function()
     activity.newActivity("plugin/main", { luaproject, luapath })
 end
@@ -1062,7 +1564,6 @@ function onMenuItemSelected(id, item)
         [optmenu.play] = func.play,
         [optmenu.undo] = func.undo,
         [optmenu.redo] = func.redo,
-        [optmenu.file_save2] = func.save,
         [optmenu.file_open] = func.open,
         [optmenu.file_history] = func.history,
         [optmenu.file_save] = func.save,
@@ -1091,7 +1592,7 @@ function onMenuItemSelected(id, item)
     }
 end
 
-activity.setContentView(layout.main)
+activity.setContentView(loadlayout(layout.main))
 
 function onCreate(s)
     --[[ local intent=activity.getIntent()
@@ -1104,7 +1605,7 @@ function onCreate(s)
         if last < editor.getText().length() then
             editor.setSelection(last)
         end
-      else
+    else
         luapath = activity.LuaExtDir .. "/new.lua"
         if not pcall(read, luapath) then
             write(luapath, code)
@@ -1117,7 +1618,26 @@ end
 function onNewIntent(intent)
     local uri = intent.getData()
     if uri and uri.getPath():find("%.alp$") then
-        imports(uri.getPath():match("/storage.+") or uri.getPath())
+        local data = intent.getData();
+        if (data ~= nil)
+            local path = data.getPath();
+            if (path ~= null)
+                if ("content" == (data.getScheme()))
+                    local ins = activity.getContentResolver().openInputStream(data);
+                    local path2 = activity.getLuaExtPath("cache", File(data.getPath()).getName());
+                    local out = FileOutputStream(path2);
+                    LuaUtil.copyFile(ins, out);
+                    out.close();
+                    imports(path2,data);
+                    return ;
+                end
+                local idx = path.indexOf("/storage/emulated/");
+                if (idx > 0)
+                    path = path.substring(idx);
+                end
+                imports(path,data);
+            end
+        end
     end
 end
 
@@ -1126,7 +1646,7 @@ function onResult(name, path)
     if name == "project" then
         luadir = path .. "/"
         read(path .. "/main.lua")
-      elseif name == "projectinfo" then
+    elseif name == "projectinfo" then
         activity.setTitle(path)
     end
 end
@@ -1180,22 +1700,6 @@ function onStop()
     local f = io.open(luahist, "wb")
     f:write(string.format("history=%s", dump(history)))
     f:close()
-    if trck then
-      trck.Enabled=false
-    end
-end
-
-function onResume()
-    if trck then
-      trck.Enabled=true--重器定时器
-    end
-end
-
-function onDestroy()
-  if trck then
-    trck.Enabled=false
-    trck.stop()
-  end
 end
 
 --创建对话框
@@ -1221,14 +1725,14 @@ function create_imports_dlg()
     imports_dlg.setTitle("导入")
     imports_dlg.setPositiveButton("确定", {
         onClick = function()
-            local path = imports_dlg.Message:match("路径: (.+)$")
+            local path = imports_path
             if imports_dlg.Title == "打包安装" then
                 importx(path, "build")
                 imports_dlg.setTitle("导入")
-              elseif imports_dlg.Title == "导入插件" then
+            elseif imports_dlg.Title == "导入插件" then
                 importx(path, "plugin")
                 imports_dlg.setTitle("导入")
-              else
+            else
                 importx(path)
             end
         end })
@@ -1245,10 +1749,10 @@ function create_delete_dlg()
         onClick = function()
             if luapath:find(delete_dlg.Message) then
                 Toast.makeText(activity, "不能删除正在打开的文件.", Toast.LENGTH_SHORT ).show()
-              elseif LuaUtil.rmDir(File(delete_dlg.Message)) then
+            elseif LuaUtil.rmDir(File(delete_dlg.Message)) then
                 Toast.makeText(activity, "已删除.", Toast.LENGTH_SHORT ).show()
                 list(listview, luadir)
-              else
+            else
                 Toast.makeText(activity, "删除失败.", Toast.LENGTH_SHORT ).show()
             end
         end })
@@ -1323,7 +1827,7 @@ function create_open_dlg2()
                 luadir = v.Text:gsub("[^/]+$", "")
                 read(v.Text)
                 open_dlg2.hide()
-              else
+            else
                 listview2.adapter.remove(pos)
                 table.remove(plist, id)
                 Toast.makeText(activity, "文件不存在", 1000).show()
@@ -1430,35 +1934,11 @@ local window_focused = android.R.attr.state_window_focused;
 local focused = android.R.attr.state_focused;
 local selected = android.R.attr.state_selected;
 
-function clicktext(v)
+function click(v)
     editor.paste(v.Text)
 end
 
-func["关闭查错"] = function(v)
-    if trck then
-        trck.Enabled=false
-        trck.stop()
-        trck=nil
-    end
-    trck = nil
-    error_e_line = nil
-    error_e_row = nil
-    editor.set_iserror(false);
-    errormes.Text = "    无语法错误"
-    v.Text = "打开查错"
-end
-
-func["打开查错"] = function(v)
-    trck=timer(ckt,0,400,1)
-    trck.Enabled=true
-    v.Text = "关闭查错"
-end
-
-function clickutf8text(s)
-    func[s.getText()](s)
-end
-
-function newButton(text,fuc)
+function newButton(text)
     local sd = StateListDrawable()
     sd.addState({ pressed }, cd2)
     sd.addState({ 0 }, cd1)
@@ -1468,143 +1948,34 @@ function newButton(text,fuc)
     btn.setPadding(pd, pd / 2, pd, pd / 4)
     btn.Text = text
     btn.setBackgroundDrawable(sd)
-    btn.onClick = fuc
+    btn.onClick = click
     return btn
 end
 local ps = { "(", ")", "[", "]", "{", "}", "\"", "=", ":", ".", ",", "_", "+", "-", "*", "/", "\\", "%", "#", "^", "$", "?", "&", "|", "<", ">", "~", ";", "'" };
 for k, v in ipairs(ps) do
-    ps_bar.addView(newButton(v,clicktext))
+    ps_bar.addView(newButton(v))
 end
-if trck then
-    guanbi = "关闭查错"
-  else
-    guanbi = "打开查错"
-end
-local ps2 = {"撤销","恢复","格式化","导入分析","跳转报错",guanbi,"搜索","跳行","导航","日志","编译","JavaAPI"}
-for k, v in ipairs(ps2) do
-    ps_bar2.addView(newButton(v,clickutf8text))
-end
-local ps3 = {"新建文件","布局助手","打包","新建工程","打开工程","工程信息","导出工程","历史记录"}
-for k, v in ipairs(ps3) do
-    ps_bar3.addView(newButton(v,clickutf8text))
-end
-
---悬浮按钮
-import "android.view.animation.Animation$AnimationListener"
-import "android.view.animation.ScaleAnimation"
-import "android.view.animation.ScaleAnimation"
-function CircleButton (InsideColor,radiu,...)
-    import "android.graphics.drawable.GradientDrawable"
-    drawable = GradientDrawable()
-    drawable.setShape(GradientDrawable.RECTANGLE)
-    drawable.setColor(InsideColor)
-    drawable.setCornerRadii({radiu,radiu,radiu,radiu,radiu,radiu,radiu,radiu});
-    for k,v in ipairs({...}) do
-        v.setBackgroundDrawable(drawable)
-    end
-end
-local h=tonumber(os.date("%H"))
-if h>6 and h<21 then
-    CircleButton(0x79a28ae8,100,bt,bt1,bt2,bt3,bt4)
-  else
-    CircleButton(0x3a1a70d1,100,bt,bt1,bt2,bt3,bt4)
-end
-func["保存文件"]=func.save
-
-bt.onClick=function(v)
-    if bt1.getVisibility()==0 then
-        bt4.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(400))
-        bt4.setVisibility(View.GONE)
-        bt3.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(300))
-        bt3.setVisibility(View.GONE)
-        bt2.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(200))
-        bt2.setVisibility(View.GONE)
-        bt1.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(100))
-        bt1.setVisibility(View.GONE)
-        bt.text="展开"
-      else
-        bt1.setVisibility(View.VISIBLE)
-        bt2.setVisibility(View.VISIBLE)
-        bt3.setVisibility(View.VISIBLE)
-        bt4.setVisibility(View.VISIBLE)
-        bt1.startAnimation(ScaleAnimation(0.0, 1.0, 0.0, 1.0,1, 0.5, 1, 0.5).setDuration(200))
-        bt2.startAnimation(ScaleAnimation(0.0, 1.0, 0.0, 1.0,1, 0.5, 1, 0.5).setDuration(300))
-        bt3.startAnimation(ScaleAnimation(0.0, 1.0, 0.0, 1.0,1, 0.5, 1, 0.5).setDuration(400))
-        bt4.startAnimation(ScaleAnimation(0.0, 1.0, 0.0, 1.0,1, 0.5, 1, 0.5).setDuration(500))
-        bt.text="收起"
-    end
-end
-bt1.onClick=function(v)
-    bt1.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(200))
-    bt1.setVisibility(View.GONE)
-    bt2.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(300))
-    bt2.setVisibility(View.GONE)
-    bt3.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(400))
-    bt3.setVisibility(View.GONE)
-    bt4.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(500))
-    bt4.setVisibility(View.GONE)
-    func[bt1.getText()]()
-end
-bt2.onClick=function(v)
-    bt1.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(200))
-    bt1.setVisibility(View.GONE)
-    bt2.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(300))
-    bt2.setVisibility(View.GONE)
-    bt3.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(400))
-    bt3.setVisibility(View.GONE)
-    bt4.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(500))
-    bt4.setVisibility(View.GONE)
-    func[bt2.getText()]()
-end
-bt3.onClick=function(v)
-    bt1.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(200))
-    bt1.setVisibility(View.GONE)
-    bt2.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(300))
-    bt2.setVisibility(View.GONE)
-    bt3.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(400))
-    bt3.setVisibility(View.GONE)
-    bt4.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(500))
-    bt4.setVisibility(View.GONE)
-    func[bt3.getText()]()
-end
-bt4.onClick=function(v)
-    bt1.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(200))
-    bt1.setVisibility(View.GONE)
-    bt2.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(300))
-    bt2.setVisibility(View.GONE)
-    bt3.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(400))
-    bt3.setVisibility(View.GONE)
-    bt4.startAnimation(ScaleAnimation(1.0, 0.0, 1.0, 0.0,1, 0.5, 1, 0.5).setDuration(500))
-    bt4.setVisibility(View.GONE)
-    func[bt4.getText()]()
-end
-
 
 local function adds()
     require "import"
     local classes = require "javaapi.android"
     local ms = { "onCreate",
-        "onStart",
-        "onResume",
-        "onPause",
-        "onStop",
-        "onDestroy",
-        "onActivityResult",
-        "onResult",
-        "onCreateOptionsMenu",
-        "onOptionsItemSelected",
-        "onClick",
-        "onTouch",
-        "onLongClick",
-        "onItemClick",
-        "onItemLongClick",
+                 "onStart",
+                 "onResume",
+                 "onPause",
+                 "onStop",
+                 "onDestroy",
+                 "onActivityResult",
+                 "onResult",
+                 "onCreateOptionsMenu",
+                 "onOptionsItemSelected",
+                 "onClick",
+                 "onTouch",
+                 "onLongClick",
+                 "onItemClick",
+                 "onItemLongClick",
     }
-    local newlen = #ms + #classes
-    local tmp = {}
-    for n=1, newlen do
-        tmp[n] = "a"..n
-    end
-    local buf = luajava.createArray("java.lang.String", tmp)
+    local buf = String[#ms + #classes]
     for k, v in ipairs(ms) do
         buf[k - 1] = v
     end
@@ -1652,169 +2023,42 @@ end
 function onKeyShortcut(keyCode, event)
     local filteredMetaState = event.getMetaState() & ~KeyEvent.META_CTRL_MASK;
     if (KeyEvent.metaStateHasNoModifiers(filteredMetaState)) then
-        while keyCode do
-            if(keyCode==KeyEvent.KEYCODE_O)then
-                func.open();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_P)then
-                func.openproject();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_S)then
-                func.save();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_E)then
-                func.char();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_R)then
-                func.play();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_N)then
-                func.navi();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_U)then
-                func.undo();
-                return true;
-              elseif(keyCode==KeyEvent.KEYCODE_I)then
-                fix(editor.getSelectedText());
-                return true;
-              else
-                return false;
-            end
-        end
+        switch(keyCode)
+        case
+        KeyEvent.KEYCODE_O
+        func.open();
+        return true;
+        case
+        KeyEvent.KEYCODE_P
+        func.openproject();
+        return true;
+        case
+        KeyEvent.KEYCODE_S
+        func.save();
+        return true;
+        case
+        KeyEvent.KEYCODE_E
+        func.check();
+        return true;
+        case
+        KeyEvent.KEYCODE_R
+        func.play();
+        return true;
+        case
+        KeyEvent.KEYCODE_N
+        func.navi();
+        return true;
+        case
+        KeyEvent.KEYCODE_U
+        func.undo();
+        return true;
+        case
+        KeyEvent.KEYCODE_I
+        fix(editor.getSelectedText());
+        return true;
     end
-    return false;
+end
+return false;
 end
 
 
-func.choiceColor = function()
-    import "android.graphics.PorterDuffColorFilter"
-    import "android.graphics.PorterDuff"
-
-    取色器=
-    {
-        LinearLayout;
-        orientation="vertical";
-        layout_width="fill";
-        layout_height="fill";
-        gravity="center";
-        {
-            CardView;
-            id="卡片图";
-            layout_margin="10dp";
-            radius="40dp",
-            elevation="0dp",
-            layout_width="20%w";
-            layout_height="20%w";
-        };
-        {
-            TextView;
-            layout_margin="0dp";
-            textSize="12sp";
-            id="颜色文本";
-            textColor=左侧栏项目色;
-        };
-        {
-            SeekBar;
-            id="拖动一";
-            layout_margin="15dp";
-            layout_width="match";
-            layout_height="wrap";
-        };
-        {
-            SeekBar;
-            id="拖动二";
-            layout_margin="15dp";
-            layout_width="match";
-            layout_height="wrap";
-        };
-        {
-            SeekBar;
-            id="拖动三";
-            layout_margin="15dp";
-            layout_width="match";
-            layout_height="wrap";
-        };
-        {
-            SeekBar;
-            id="拖动四";
-            layout_margin="15dp";
-            layout_width="match";
-            layout_height="wrap";
-        };
-    };
-    --对话框View
-    local 取色器=loadlayout(取色器)
-    拖动一.setMax(255)
-    拖动二.setMax(255)
-    拖动三.setMax(255)
-    拖动四.setMax(255)
-    拖动一.setProgress(0xff)
-    拖动二.setProgress(0x1e)
-    拖动三.setProgress(0x8a)
-    拖动四.setProgress(0xe8)
-    --监听
-    拖动一.setOnSeekBarChangeListener{
-        onProgressChanged=function(view, i)
-            updateArgb()
-        end
-    }
-
-    拖动二.setOnSeekBarChangeListener{
-        onProgressChanged=function(view, i)
-            updateArgb()
-        end
-    }
-
-    拖动三.setOnSeekBarChangeListener{
-        onProgressChanged=function(view, i)
-            updateArgb()
-        end
-    }
-
-    拖动四.setOnSeekBarChangeListener{
-        onProgressChanged=function(view, i)
-            updateArgb()
-        end
-    }
-    --更新颜色
-    function updateArgb()
-        local a=拖动一.getProgress()
-        local r=拖动二.getProgress()
-        local g=拖动三.getProgress()
-        local b=拖动四.getProgress()
-        local argb_hex=(a<<24|r<<16|g<<8|b)
-        颜色文本.Text=string.format("%#x", argb_hex)
-        卡片图.setCardBackgroundColor(argb_hex)
-    end
-    --翻译进度
-    argbBuild=AlertDialog.Builder(activity)
-    argbBuild.setView(取色器)
-    argbBuild.setTitle("选色器")
-    argbBuild.setPositiveButton("复制", {
-        onClick=function(view)
-            local a=拖动一.getProgress()
-            local r=拖动二.getProgress()
-            local g=拖动三.getProgress()
-            local b=拖动四.getProgress()
-            local argb_hex=(a<<24|r<<16|g<<8|b)
-            local argb_str=string.format("%#x", argb_hex)
-            activity.getSystemService(Context.CLIPBOARD_SERVICE).setText(argb_str)
-            print("已复制到剪贴板")
-        end
-    })
-    argbBuild.setNeutralButton("取消",{onClick=function()
-
-        end})--设置否认按钮
-    --实例化对话框
-    argbDialog=argbBuild.create()
-    argbDialog.setCanceledOnTouchOutside(false)
-    function showArgbDialog()
-        --展示对话框
-        argbDialog.show()
-        --更新颜色
-        updateArgb()
-    end
-    showArgbDialog()
-end
-
-func["颜色选择"]=func.choiceColor

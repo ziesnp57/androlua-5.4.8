@@ -22,7 +22,6 @@ function fiximport(path)
   import "com.myopicmobile.textwarrior.common.*"
   import "layout"
   classes=require "android"
-  if not path then path = "" end
   local searchpath=path:gsub("[^/]+%.lua","?.lua;")..path:gsub("[^/]+%.lua","?.aly;")
   local cache={}
   function checkclass(path,ret)
@@ -30,14 +29,9 @@ function fiximport(path)
       return
     end
     cache[path]=true
-    local str = ""
     local f=io.open(path)
-    if f then
-        str=f:read("*a")
-        f:close()
-    else
-       str = nil
-    end
+    local str=f:read("a")
+    f:close()
     if not str then
       return
       end

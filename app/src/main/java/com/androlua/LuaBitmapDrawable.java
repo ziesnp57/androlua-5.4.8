@@ -163,10 +163,12 @@ public class LuaBitmapDrawable extends Drawable implements Runnable ,LuaGcable{
     public int getIntrinsicWidth() {
         if (mMovie != null) {
             return mMovie.width();
+        } else if (mGifDecoder != null) {
+            return mGifDecoder.width;
         } else if (mBitmapDrawable != null) {
-            mBitmapDrawable.getIntrinsicWidth();
+            return mBitmapDrawable.getIntrinsicWidth();
         } else if (mNineBitmapDrawable != null) {
-            mNineBitmapDrawable.getIntrinsicWidth();
+            return mNineBitmapDrawable.getIntrinsicWidth();
         }
         return super.getIntrinsicWidth();
     }
@@ -175,10 +177,12 @@ public class LuaBitmapDrawable extends Drawable implements Runnable ,LuaGcable{
     public int getIntrinsicHeight() {
         if (mMovie != null) {
             return mMovie.height();
+        } else if (mGifDecoder != null) {
+            return mGifDecoder.height;
         } else if (mBitmapDrawable != null) {
-            mBitmapDrawable.getIntrinsicHeight();
+            return mBitmapDrawable.getIntrinsicHeight();
         } else if (mNineBitmapDrawable != null) {
-            mNineBitmapDrawable.getIntrinsicHeight();
+            return mNineBitmapDrawable.getIntrinsicHeight();
         }
         return super.getIntrinsicHeight();
     }

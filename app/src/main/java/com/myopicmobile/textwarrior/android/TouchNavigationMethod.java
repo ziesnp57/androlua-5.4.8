@@ -352,11 +352,16 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
         return false;
     }
 
-
+    /**
+     * Android lifecyle event. See {@link android.app.Activity#onPause()}.
+     */
     void onPause() {
         //do nothing
     }
 
+    /**
+     * Android lifecyle event. See {@link android.app.Activity#onResume()}.
+     */
     void onResume() {
         //do nothing
     }
@@ -399,6 +404,7 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
         return _caretBloat;
     }
 
+    @SuppressWarnings("deprecation")
     final protected int getPointerId(MotionEvent e) {
         return (e.getAction() & MotionEvent.ACTION_POINTER_ID_MASK)
                 >> MotionEvent.ACTION_POINTER_ID_SHIFT;
@@ -424,7 +430,7 @@ public class TouchNavigationMethod extends GestureDetector.SimpleOnGestureListen
         return true;
     }
 
-    final private boolean isDragSelect() {
+    private boolean isDragSelect() {
         return false;
     }
 

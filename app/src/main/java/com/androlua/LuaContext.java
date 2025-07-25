@@ -54,6 +54,7 @@ public interface LuaContext {
 
     public Map getGlobalData();
 
+    public Object getSharedData();
     public Object getSharedData(String key);
     public Object getSharedData(String key,Object def);
     public boolean setSharedData(String key, Object value);

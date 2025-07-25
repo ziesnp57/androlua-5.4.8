@@ -6,7 +6,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -67,7 +67,7 @@ public class LuaDexLoader {
     }
 
 
-    public void loadLibs() throws LuaError {
+    public void loadLibs() throws LuaException {
         File[] libs = new File(mContext.getLuaDir() + "/libs").listFiles();
         if (libs == null)
             return;
@@ -81,7 +81,7 @@ public class LuaDexLoader {
         }
     }
 
-    public void loadLib(String name) throws LuaError {
+    public void loadLib(String name) throws LuaException {
         String fn = name;
         int i = name.indexOf(".");
         if (i > 0)
@@ -94,7 +94,7 @@ public class LuaDexLoader {
         if (!f.exists()) {
             f = new File(luaDir + "/libs/lib" + fn + ".so");
             if (!f.exists())
-                throw new LuaError("can not find lib " + name);
+                throw new LuaException("can not find lib " + name);
             LuaUtil.copyFile(luaDir + "/libs/lib" + fn + ".so", libPath);
 
         }
@@ -106,7 +106,7 @@ public class LuaDexLoader {
     }
 
 
-    public DexClassLoader loadDex(String path) throws LuaError {
+    public DexClassLoader loadDex(String path) throws LuaException {
         LuaDexClassLoader dex = dexCache.get(path);
         if(dex==null)
            dex = loadApp(path);
@@ -120,7 +120,7 @@ public class LuaDexLoader {
                 else if (new File(path + ".jar").exists())
                     path += ".jar";
                 else
-                    throw new LuaError(path + " not found");
+                    throw new LuaException(path + " not found");
             String id = LuaUtil.getFileMD5(path);
             if (id != null && id.equals("0"))
                 id = name;

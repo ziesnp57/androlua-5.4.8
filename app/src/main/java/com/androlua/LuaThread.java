@@ -6,7 +6,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.luajava.JavaFunction;
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaMetaTable;
 import com.luajava.LuaObject;
 import com.luajava.LuaState;
@@ -81,19 +81,19 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 
 	private byte[] mBuffer;
 
-	public LuaThread(LuaContext luaContext, String src) throws LuaError {
+	public LuaThread(LuaContext luaContext, String src) throws LuaException {
 		this(luaContext, src, false, null);
 	}
 
-	public LuaThread(LuaContext luaContext, String src, Object[] arg) throws LuaError {
+	public LuaThread(LuaContext luaContext, String src, Object[] arg) throws LuaException {
 		this(luaContext, src, false, arg);
 	}
 
-	public LuaThread(LuaContext luaContext, String src, boolean isLoop) throws LuaError {
+	public LuaThread(LuaContext luaContext, String src, boolean isLoop) throws LuaException {
 		this(luaContext, src, isLoop, null);
 	}
 
-	public LuaThread(LuaContext luaContext, String src, boolean isLoop, Object[] arg) throws LuaError {
+	public LuaThread(LuaContext luaContext, String src, boolean isLoop, Object[] arg) throws LuaException {
 		luaContext.regGc(this);
 		mLuaContext = luaContext;
 		mSrc = src;
@@ -101,17 +101,17 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 		if (arg != null)
 			mArg = arg;
 	}
-	public LuaThread(LuaContext luaContext, LuaObject func) throws LuaError {
+	public LuaThread(LuaContext luaContext, LuaObject func) throws LuaException {
 		this(luaContext, func, false, null);
 	}
-	public LuaThread(LuaContext luaContext, LuaObject func, Object[] arg) throws LuaError {
+	public LuaThread(LuaContext luaContext, LuaObject func, Object[] arg) throws LuaException {
 		this(luaContext, func, false, arg);
 	}
-	public LuaThread(LuaContext luaContext, LuaObject func, boolean isLoop) throws LuaError {
+	public LuaThread(LuaContext luaContext, LuaObject func, boolean isLoop) throws LuaException {
 		this(luaContext, func, isLoop, null);
 	}
 
-	public LuaThread(LuaContext luaContext, LuaObject func, boolean isLoop, Object[] arg) throws LuaError {
+	public LuaThread(LuaContext luaContext, LuaObject func, boolean isLoop, Object[] arg) throws LuaException {
 		mLuaContext = luaContext;
 		if (arg != null)
 			mArg = arg;
@@ -132,7 +132,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 					newLuaThread(mSrc, mArg);
 			}
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError(this.toString(), e);
 			return;
 		}
@@ -169,7 +169,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 		push(4, key, new Object[]{ value});
 	}
 
-	public Object get(String key) throws LuaError {
+	public Object get(String key) throws LuaException {
 		L.getGlobal(key);
 		return L.toJavaObject(-1);
 	}
@@ -233,7 +233,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 	}
 
 
-	private void initLua() throws LuaError {		
+	private void initLua() throws LuaException {		
 		L = LuaStateFactory.newLuaState();
 		L.openLibs();
 		L.pushJavaObject(mLuaContext.getContext());
@@ -260,7 +260,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 
 		JavaFunction set = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError {
+			public int execute() throws LuaException {
 
 				mLuaContext.set(L.toString(2), L.toJavaObject(3));
 				return 0;
@@ -270,7 +270,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 
 		JavaFunction call = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError {
+			public int execute() throws LuaException {
 
 				int top=L.getTop();
 				if (top > 2) {
@@ -337,7 +337,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 					return;
 				}
 			}
-			throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+			throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 		}
 		catch (Exception e) {
 			mLuaContext.sendError(this.toString(), e);
@@ -345,7 +345,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 		}
 	}
 
-	private void doFile(String filePath, Object...args) throws LuaError {
+	private void doFile(String filePath, Object...args) throws LuaException {
 		int ok = 0;
 		L.setTop(0);
 		ok = L.LloadFile(filePath);
@@ -364,11 +364,11 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
 
-	public void doAsset(String name, Object...args) throws LuaError, IOException {
+	public void doAsset(String name, Object...args) throws LuaException, IOException {
 		int ok = 0;
 		byte[] bytes = LuaUtil.readAsset(mLuaContext.getContext(), name);
 		L.setTop(0);
@@ -388,10 +388,10 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
-	private void doString(String src, Object...args) throws LuaError {			
+	private void doString(String src, Object...args) throws LuaException {			
 		L.setTop(0);
 		int ok = L.LloadString(src);
 
@@ -410,7 +410,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
 
@@ -433,10 +433,10 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 				if (ok == 0) {				
 					return ;
 				}
-				throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+				throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 			}
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError(this.toString()+" "+funcName, e);
 		}
 
@@ -447,7 +447,7 @@ public class LuaThread extends Thread implements Runnable,LuaMetaTable,LuaGcable
 			L.pushObjectValue(value);
 			L.setGlobal(key);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError(this.toString(), e);
 		}
 	}

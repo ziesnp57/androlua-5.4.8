@@ -247,10 +247,28 @@ public final class ByteArray {
         return bytes[start + off] & 0xff;
     }
 
+    /**
+     * Gets a {@code DataInputStream} that reads from this instance,
+     * with the cursor starting at the beginning of this instance's data.
+     * <b>Note:</b> The returned instance may be cast to {@link #GetCursor}
+     * if needed.
+     *
+     * @return {@code non-null;} an appropriately-constructed
+     * {@code DataInputStream} instance
+     */
     public MyDataInputStream makeDataInputStream() {
         return new MyDataInputStream(makeInputStream());
     }
 
+    /**
+     * Gets a {@code InputStream} that reads from this instance,
+     * with the cursor starting at the beginning of this instance's data.
+     * <b>Note:</b> The returned instance may be cast to {@link #GetCursor}
+     * if needed.
+     *
+     * @return {@code non-null;} an appropriately-constructed
+     * {@code InputStream} instancex
+     */
     public MyInputStream makeInputStream() {
         return new MyInputStream();
     }
@@ -325,9 +343,13 @@ public final class ByteArray {
         }
     }
 
-
+    /**
+     * Helper class for {@link #makeDataInputStream}. This is used
+     * simply so that the cursor of a wrapped {@link #MyInputStream}
+     * instance may be easily determined.
+     */
     public static class MyDataInputStream extends DataInputStream {
-
+        /** {@code non-null;} the underlying {@link #MyInputStream} */
         private final MyInputStream wrapped;
 
         public MyDataInputStream(MyInputStream wrapped) {

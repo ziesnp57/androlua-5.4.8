@@ -14,6 +14,8 @@ import com.android.cglib.dx.Label;
 import com.android.cglib.dx.Local;
 import com.android.cglib.dx.MethodId;
 import com.android.cglib.dx.TypeId;
+import com.androlua.LuaUtil;
+
 import android.content.Context;
 
 public class Enhancer {
@@ -56,6 +58,8 @@ public class Enhancer {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
+		} finally {
+			LuaUtil.rmDir(new File(cacheDir));
 		}
 		return null;
 	}

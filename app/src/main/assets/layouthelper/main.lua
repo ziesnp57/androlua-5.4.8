@@ -166,11 +166,6 @@ function adapter(t)
 end
 
 import "android.graphics.drawable.*"
-gd=GradientDrawable()
-gd.setColor(0x00ffffff)
-gd.setStroke(2,0x44000000,5,5)
-gd.setGradientRadius(700)
-gd.setGradientType(1)
 
 
 curr=nil
@@ -199,7 +194,7 @@ fds_grid={
   "layout_width","layout_height","layout_gravity",
   "background","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 fds_linear={
@@ -207,7 +202,7 @@ fds_linear={
   "id","orientation","layout_width","layout_height","layout_gravity",
   "background","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 fds_group={
@@ -215,7 +210,7 @@ fds_group={
   "id","layout_width","layout_height","layout_gravity",
   "background","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 fds_text={
@@ -223,7 +218,7 @@ fds_text={
   "id","layout_width","layout_height","layout_gravity",
   "background","text","textColor","textSize","singleLine","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 fds_image={
@@ -231,7 +226,7 @@ fds_image={
   "id","layout_width","layout_height","layout_gravity",
   "background","src","scaleType","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 fds_view={
@@ -239,7 +234,7 @@ fds_view={
   "id","layout_width","layout_height","layout_gravity",
   "background","gravity",
   "layout_margin","layout_marginLeft","layout_marginTop","layout_marginRight","layout_marginBottom",
-  "padding","paddingLeft","paddingTop","paddingRight","paddingButtom",
+  "padding","paddingLeft","paddingTop","paddingRight","paddingBottom",
 }
 
 --属性选择列表

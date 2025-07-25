@@ -12,7 +12,7 @@ public class FloatWindow {
 
 	private Context mContext;
 
-	private FloatWindow.TitleBar mTitlebar;
+	private TitleBar mTitlebar;
 
 	private WindowManager mWindowManager;
 
@@ -172,8 +172,8 @@ public class FloatWindow {
 						dismiss();
 					}
 				});
-			addView(mTitle, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(24), 1));
-			addView(mClose, new LinearLayout.LayoutParams(dp(24), dp(24)));
+			addView(mTitle, new LayoutParams(LayoutParams.MATCH_PARENT, dp(24), 1));
+			addView(mClose, new LayoutParams(dp(24), dp(24)));
 		}
 		public void setTitle(CharSequence title) {
 			mTitle.setText(title);

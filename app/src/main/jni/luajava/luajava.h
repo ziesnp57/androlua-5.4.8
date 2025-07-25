@@ -9,6 +9,11 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+typedef struct {
+    //const char* name;
+    int type;
+    int index;
+} java_object;
 
  JNIEnv *checkEnv(lua_State *L);
 
@@ -16,16 +21,16 @@
 
  jlong checkIndex(lua_State *L);
 
- jobject *checkJavaObject(lua_State *L, int idx);
+ java_object *checkJavaObject(lua_State *L, int idx);
+
+ jobject *toJavaObject(lua_State *L, int idx);
 
  void checkError(JNIEnv *javaEnv, lua_State *L);
-
- int gc(lua_State * L);
 
  JNIEnv *getEnvFromState(lua_State * L);
 
  int isJavaObject(lua_State * L, int idx);
 
- int pushJavaObject(lua_State * L, jobject javaObject);
+ int pushJavaObject(lua_State *L, const char *name,int idx,int isclass);
 
 #endif

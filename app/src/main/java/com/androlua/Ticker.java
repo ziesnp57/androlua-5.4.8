@@ -6,7 +6,7 @@ public class Ticker
 {
 	private Handler mHandler;
 
-	private Ticker.OnTickListener mOnTickListener;
+	private OnTickListener mOnTickListener;
 
 	private Thread mThread;
 

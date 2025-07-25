@@ -327,7 +327,7 @@ local function checkValues(...)
   for n=1,#vars do
     vars[n]=checkValue(vars[n])
   end
-  return table.unpack(vars)
+  return unpack(vars)
 end
 
 local function getattr(s)

@@ -1,9 +1,7 @@
 package com.luajava;
 
-import com.androlua.LuaActivity;
-
-import java.io.IOException;
 import java.util.*;
+import java.util.Map.*;
 
 public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 
@@ -31,7 +29,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			b = L.getTable(-2) != LuaState.LUA_TNIL;
 			L.pop(1);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			return false;
 		}
 		L.pop(1);
@@ -54,7 +52,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			try {
 				sets.add(new LuaEntry<K,V>((K)L.toJavaObject(-2), (V)L.toJavaObject(-1)));
 			}
-			catch (LuaError e) {}
+			catch (LuaException e) {}
 			L.pop(1);
 		}
 		L.pop(1);
@@ -72,7 +70,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			obj = (V) L.toJavaObject(-1);
 			L.pop(1);
 		}
-		catch (LuaError e) {}
+		catch (LuaException e) {}
 		L.pop(1);
 		return obj;
 	}
@@ -101,7 +99,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			try {
 				sets.add((K)L.toJavaObject(-2));
 			}
-			catch (LuaError e) {}
+			catch (LuaException e) {}
 			L.pop(1);
 		}
 		L.pop(1);
@@ -117,7 +115,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			L.pushObjectValue(value);
 			L.setTable(-3);
 		}
-		catch (LuaError e) {}
+		catch (LuaException e) {}
 		L.pop(1);
 		return null;
 	}
@@ -135,7 +133,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			L.pushObjectValue(key);
 			L.setTable(-2);
 		}
-		catch (LuaError e) {}
+		catch (LuaException e) {}
 		L.pop(1);
 		return null;
 	}
@@ -187,7 +185,7 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			try {
 				sets.add((V)L.toJavaObject(-1));
 			}
-			catch (LuaError e) {}
+			catch (LuaException e) {}
 			L.pop(1);
 		}
 		L.pop(1);
@@ -239,303 +237,5 @@ public class LuaTable <K, V>extends LuaObject implements Map <K,V>{
 			mKey = k;
 			mValue = v;
 		}
-	}
-
-	public Iterator iterator(){
-		return new Iterator();
-	}
-
-	public class Iterator{
-		private HashSet<LuaEntry<K,V>> set = null;
-		public Iterator(){
-			HashSet<LuaEntry<K,V>> sets=new HashSet<LuaEntry<K,V>>();
-			push();
-			L.pushNil();
-			while (L.next(-2) != 0) {
-				try {
-					sets.add(new LuaEntry<K,V>((K)L.toJavaObject(-2), (V)L.toJavaObject(-1)));
-				}
-				catch (LuaError e) {}
-				L.pop(1);
-			}
-			L.pop(1);
-			set = sets;
-		}
-	}
-
-	private static volatile Set<String> dumped = new HashSet<String>();
-
-	public Object runFunc(String funcName, Object...args) {
-		if (L != null) {
-			try {
-				L.setTop(0);
-				L.getGlobal(funcName);
-				if (L.isFunction(-1)) {
-					L.getGlobal("debug");
-					L.getField(-1, "traceback");
-					L.remove(-2);
-					L.insert(-2);
-
-					int l=0;
-					if (args != null)
-						l = args.length;
-					for (int i=0;i < l;i++) {
-						L.pushObjectValue(args[i]);
-					}
-
-					int ok = L.pcall(l, 1, -2 - l);
-					if (ok == 0) {
-						return L.toJavaObject(-1);
-					}
-					throw new LuaError( "LuaTable error: " + L.toString(-1));
-				}
-			}
-			catch (LuaError e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
-
-	public String getcode(LuaTable t){
-		if(t!=null) {
-			return runFunc("tostring",t).toString();
-		}
-		return "0";
-	}
-	public Appendable dump(Appendable appendable,int i) throws IOException {
-		Set<String> set = dumped;
-		String code1 = getcode(this);
-		if(set!=null){
-			set.add(code1);
-		}
-		appendable.append("{");
-		appendable.append("--(");
-		appendable.append(code1);
-		appendable.append(")\n");
-		ArrayList<String> arrayList = new ArrayList<>(); // other key
-		Map<Long,String> LongList = new HashMap<>(); //long key
-		Map<Double,String> DbList = new HashMap<>(); //double key
-		ArrayList<String> BoolList = new ArrayList<>(); //boolean key
-		HashSet<LuaEntry<K,V>> it = iterator().set;
-		for (LuaEntry le:it) {
-			Object ke = le.getKey();
-			Object valu = le.getValue();
-			Appendable sb = new StringBuffer();
-			Long islong = null;
-			Double isdouble = null;
-			boolean isboolean = false;
-			if (ke != null) {
-				if(ke instanceof LuaObject) {
-					LuaObject key = (LuaObject) ke;
-					if (!key.isNil()) {
-						sb = concat(sb, i);
-						sb.append("[");
-						if (key.isInteger()) {
-							long k = key.getInteger();
-							sb.append(String.valueOf(k));
-							islong = k;
-						} else if (key.isNumber()) {
-							double k = key.getNumber();
-							sb.append(String.valueOf(k));
-							isdouble = k;
-						} else if (key.isBoolean()) {
-							boolean k = key.checkboolean();
-							sb.append(String.valueOf(k));
-							isboolean = true;
-						} else if (key.isString()) {
-							sb.append('"');
-							sb.append(key.getString());
-							sb.append('"');
-						} else if (key.isTable()) {
-							LuaTable t = (LuaTable) key;
-							String code = getcode(t);
-							if (dumped.contains(code)) {
-								sb.append("{ -- (");
-								sb.append(code);
-								sb.append(")\n");
-								sb = concat(sb, i);
-								sb.append("\t\t-- *** RECURSION *** --\n");
-								sb = concat(sb, i);
-								sb.append("}");
-							} else {
-								dumped.add(code);
-								sb.append(t.dump(new StringBuffer(), i + 1).toString());
-							}
-						} else {
-							sb.append('"');
-							sb.append(key.toString());
-							sb.append('"');
-						}
-						sb.append("] = ");
-					}
-				}else {
-					sb = concat(sb, i);
-					sb.append("[");
-					if(ke instanceof Integer){
-						long k = (long)ke;
-						sb.append(String.valueOf(k));
-						islong = k;
-					}else if(ke instanceof Long){
-						long k = (long)ke;
-						sb.append(String.valueOf(k));
-						islong = k;
-					}else if(ke instanceof Double) {
-						double k = (double)ke;
-						sb.append(String.valueOf(k));
-						isdouble = k;
-					}else if(ke instanceof Boolean){
-						boolean k = (boolean)ke;
-						sb.append(String.valueOf(k));
-						isboolean = true;
-					}else if(ke instanceof String){
-						sb.append('"');
-						sb.append(ke.toString());
-						sb.append('"');
-					}else{
-						sb.append('"');
-						sb.append(ke.toString());
-						sb.append('"');
-					}
-					sb.append("] = ");
-				}
-			}
-			if(valu==null){
-				sb.append("nil,\n");
-			}else {
-				if(valu instanceof LuaObject) {
-					LuaObject value = (LuaObject) valu;
-					if (value.isNil()) {
-						sb.append("nil,\n");
-					}else{
-						if (value.isInteger()) {
-							sb.append(String.valueOf(value.getInteger()));
-						} else if (value.isNumber()) {
-							sb.append(String.valueOf(value.getNumber()));
-						} else if (value.isBoolean()) {
-							sb.append(String.valueOf(value.checkboolean()));
-						} else if (value.isString()) {
-							sb.append('"');
-							sb.append(value.getString());
-							sb.append('"');
-						} else if (value.isTable()) {
-							LuaTable t = (LuaTable) value;
-							String code = getcode(t);
-							if (dumped.contains(code)) {
-								sb.append("{ -- (");
-								sb.append(code);
-								sb.append(")\n");
-								sb = concat(sb, i);
-								sb.append("\t\t-- *** RECURSION *** --\n");
-								sb = concat(sb, i);
-								sb.append("}");
-							} else {
-								dumped.add(code);
-								sb.append(t.dump(new StringBuffer(), i + 1).toString());
-							}
-						} else {
-							sb.append('"');
-							sb.append(value.toString());
-							sb.append('"');
-						}
-						sb.append(",\n");
-					}
-				}else {
-					if(valu instanceof Integer){
-						sb.append(String.valueOf((int)valu));
-					}else if(valu instanceof Long){
-						sb.append(String.valueOf((long)valu));
-					}else if(valu instanceof Double) {
-						sb.append(String.valueOf((double)valu));
-					}else if(valu instanceof Boolean){
-						sb.append(String.valueOf((boolean)valu));
-					}else if(valu instanceof String){
-						sb.append('"');
-						sb.append(valu.toString());
-						sb.append('"');
-					}else{
-						sb.append('"');
-						sb.append(valu.toString());
-						sb.append('"');
-					}
-					sb.append(",\n");
-				}
-			}
-			if(islong!=null){
-				LongList.put(islong,sb.toString());
-			}else if(isboolean){
-				BoolList.add(sb.toString());
-			}else if(isdouble!=null){
-				DbList.put(isdouble,sb.toString());
-			}else {
-				arrayList.add(sb.toString());
-			}
-		}
-		if(BoolList!=null&&!BoolList.isEmpty()){
-			Collections.sort(BoolList);
-			for(String str:BoolList){
-				appendable.append(str);
-			}
-		}
-		if(LongList!=null&&!LongList.isEmpty()){
-			List<Long> list = new ArrayList<Long>();
-			java.util.Iterator<Long> item = LongList.keySet().iterator();
-			while(item.hasNext()){
-				list.add(item.next());
-			}
-			Collections.sort(list);
-			java.util.Iterator<Long> item2 = list.iterator();
-			while(item2.hasNext()){
-				Long key = item2.next();
-				appendable.append(LongList.get(key));
-			}
-		}
-		if(DbList!=null&&!DbList.isEmpty()){
-			List<Double> list = new ArrayList<Double>();
-			java.util.Iterator<Double> item = DbList.keySet().iterator();
-			while(item.hasNext()){
-				list.add(item.next());
-			}
-			Collections.sort(list);
-			java.util.Iterator<Double> item2 = list.iterator();
-			while(item2.hasNext()){
-				Double key = item2.next();
-				appendable.append(DbList.get(key));
-			}
-		}
-		if(arrayList!=null&&!arrayList.isEmpty()){
-			Collections.sort(arrayList);
-			for(String str:arrayList){
-				appendable.append(str);
-			}
-		}
-		appendable = concat(appendable,i-1);
-		appendable.append("}");
-		return appendable;
-	}
-
-	public Appendable concat(Appendable appendable,int i){
-		if(i<=0){return appendable;};
-		try {
-			for(int a=0;a<i;a++){
-				appendable.append("\t");
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return appendable;
-	}
-
-	public String tostring(){
-		dumped = new HashSet<String>();
-		String o = null;
-		try {
-			o = dump(new StringBuffer(),1).toString();
-		} catch (IOException e) {
-			e.printStackTrace();
-			return e.toString();
-		}
-		dumped = null;
-		return o;
 	}
 }

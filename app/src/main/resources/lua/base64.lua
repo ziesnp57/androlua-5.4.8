@@ -1,4 +1,5 @@
-base64 = {}
+module("base64", package.seeall)
+
 local base64chars = {
     [0]='A',  [1]='B',  [2]='C',  [3]='D',  [4]='E',  [5]='F',  [6]='G',  [7]='H', 
     [8]='I',  [9]='J', [10]='K', [11]='L', [12]='M', [13]='N', [14]='O', [15]='P', 
@@ -10,7 +11,7 @@ local base64chars = {
    [56]='4', [57]='5', [58]='6', [59]='7', [60]='8', [61]='9', [62]='-', [63]='_'
 }
 
-base64.encode = function(data)
+function encode(data)
    local bytes = {}
    local result = ""
    for i = 0, data:len()-1, 3 do
@@ -47,7 +48,7 @@ local base64bytes = {
    ['=']=nil
 }
 
-base64.decode = function(data)
+function decode(data)
    local chars = {}
    local result = ""
    for i = 0, data:len()-1, 4 do
@@ -68,5 +69,3 @@ base64.decode = function(data)
    end
    return result
 end
-
-return base64

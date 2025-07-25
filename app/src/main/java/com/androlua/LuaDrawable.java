@@ -31,7 +31,7 @@ public class LuaDrawable extends Drawable {
             if (mOnDraw != null) {
                 mOnDraw.call(p1);
             }
-        } catch (LuaError e) {
+        } catch (LuaException e) {
             mContext.sendError("onDraw", e);
         }
         // TODO: Implement this method

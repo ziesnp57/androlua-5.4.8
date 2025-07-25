@@ -24,10 +24,15 @@
 
 package com.luajava;
 
+import android.util.Log;
+
 import com.androlua.LuaContext;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Class that implements the InvocationHandler interface.
@@ -39,17 +44,19 @@ import java.lang.reflect.Method;
  */
 public class LuaInvocationHandler implements InvocationHandler {
 	private final LuaContext mContext;
-	private LuaObject obj;
-
+	private final LuaObject obj;
+    private static ArrayList cache=new ArrayList();
 	public LuaInvocationHandler(LuaObject obj) {
 		this.obj = obj;
+		cache.add(obj);
 		mContext=obj.getLuaState().getContext();
 	}
 
 	/**
 	 * Function called when a proxy object function is invoked.
 	 */
-	public Object invoke(Object proxy, Method method, Object[] args) throws LuaError {
+	public Object invoke(Object proxy, Method method, Object[] args) throws LuaException {
+		Log.i("LuaInvocationHandler", "invoke: "+obj+";"+method+";"+ Arrays.toString(args));
 		synchronized (obj.L) {
 			String methodName = method.getName();
 			LuaObject func;
@@ -84,7 +91,7 @@ public class LuaInvocationHandler implements InvocationHandler {
 					}
 				}
 			}
-			catch (LuaError e) {
+			catch (Exception e) {
 				mContext.sendError(methodName, e);
 			}  	
 			if (ret == null)

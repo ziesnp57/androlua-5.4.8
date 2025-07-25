@@ -2,9 +2,8 @@ package com.myopicmobile.textwarrior.common;
 import java.io.*;
 import android.os.*;
 import com.androlua.*;
-import com.myopicmobile.textwarrior.android.*;
+
 import android.app.*;
-import java.util.concurrent.*;
 
 public class ReadTask extends AsyncTask
 {

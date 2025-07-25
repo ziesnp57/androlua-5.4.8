@@ -1,6 +1,6 @@
-hex = {}
+module("hex", package.seeall)
 
-hex.dump = function(v, delimiter, stx, etx)
+function dump(v, delimiter, stx, etx)
 
    local dump = ""
 
@@ -16,12 +16,12 @@ hex.dump = function(v, delimiter, stx, etx)
    return dump
 end
 
-hex.smart_dump = function(v)
-   v = v:gsub( "%c+", function (raw) return hex.dump(raw, "", "<", ">") end  );
+function smart_dump(v)
+   v = v:gsub( "%c+", function (raw) return dump(raw, "", "<", ">") end  );
    return v
 end
 
-hex.pack = function(v)
+function pack(v)
 
    v = v:gsub( "%s+", "" )
 
@@ -66,9 +66,7 @@ hex.pack = function(v)
    return pack
 end
 
-hex.smart_pack = function(v)
-   local packed = v:gsub( "<(%x+)>", function (dump) return hex.pack(dump) end )
+function smart_pack(v)
+   local packed = v:gsub( "<(%x+)>", function (dump) return pack(dump) end )
    return packed
 end
-
-return hex

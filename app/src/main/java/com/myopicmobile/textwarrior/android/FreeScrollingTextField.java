@@ -40,6 +40,7 @@
  */
 package com.myopicmobile.textwarrior.android;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
@@ -55,6 +56,7 @@ import android.text.ClipboardManager;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.method.CharacterPickerDialog;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -75,7 +77,6 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Scroller;
 
-import com.androlua.LuaEditor;
 import com.myopicmobile.textwarrior.common.AutoIndent;
 import com.myopicmobile.textwarrior.common.ColorScheme;
 import com.myopicmobile.textwarrior.common.ColorScheme.Colorable;
@@ -88,6 +89,8 @@ import com.myopicmobile.textwarrior.common.Lexer;
 import com.myopicmobile.textwarrior.common.Pair;
 import com.myopicmobile.textwarrior.common.RowListener;
 import com.myopicmobile.textwarrior.common.TextWarriorException;
+
+import org.luaj.vm2.compiler.LexState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,6 +132,7 @@ import static com.myopicmobile.textwarrior.common.Lexer.NORMAL;
  * this extra char. Some bounds manipulation is done so that this implementation
  * detail is hidden from client classes.
  */
+@SuppressWarnings("ALL")
 public class FreeScrollingTextField extends View
         implements Document.TextFieldMetrics {
 
@@ -152,13 +156,13 @@ public class FreeScrollingTextField extends View
     protected static long SCROLL_PERIOD = 250; //in milliseconds
     /*
      * Hash map for determining which characters to let the user choose from when
-	 * a hardware key is long-pressed. For example, long-pressing "e" displays
-	 * choices of "é, è, ê, ë" and so on.
-	 * This is biased towards European locales, but is standard Android behavior
-	 * for TextView.
-	 *
-	 * Copied from android.text.method.QwertyKeyListener, dated 2006
-	 */
+     * a hardware key is long-pressed. For example, long-pressing "e" displays
+     * choices of "é, è, ê, ë" and so on.
+     * This is biased towards European locales, but is standard Android behavior
+     * for TextView.
+     *
+     * Copied from android.text.method.QwertyKeyListener, dated 2006
+     */
     private static SparseArray<String> PICKER_SETS =
             new SparseArray<String>();
 
@@ -261,9 +265,9 @@ public class FreeScrollingTextField extends View
     private int _caretY;
     private TextChangeListener _textLis;
     private int _topOffset;
-    private Typeface _defTypeface = Typeface.DEFAULT;
-    private Typeface _boldTypeface = Typeface.DEFAULT_BOLD;
-    private Typeface _italicTypeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC);
+    private Typeface _defTypeface = Typeface.MONOSPACE;
+    private Typeface _boldTypeface = Typeface.create(_defTypeface, Typeface.BOLD);
+    private Typeface _italicTypeface = Typeface.create(_defTypeface, Typeface.ITALIC);
     private char _emoji;
     private boolean _isLayout;
     private Paint _brushLine;
@@ -315,6 +319,11 @@ public class FreeScrollingTextField extends View
      */
     private long mLastScroll;
     private boolean isAccessibilityEnabled = false;
+    private int _selectionStartX;
+    private int _selectionStartY;
+    private int _selectionEndX;
+    private int _selectionEndY;
+    private boolean _selection;
 
     public FreeScrollingTextField(Context context) {
         super(context);
@@ -360,6 +369,22 @@ public class FreeScrollingTextField extends View
         return _caretX;
     }
 
+    public int getSelectionStartX() {
+        return _selectionAnchor==_selectionEdge?_caretX:_selectionStartX;
+    }
+
+    public int getSelectionStartY() {
+        return _selectionAnchor==_selectionEdge?_caretY:_selectionStartY;
+    }
+
+    public int getSelectionEndX() {
+        return _selectionAnchor==_selectionEdge?_caretX:_selectionEndX;
+    }
+
+    public int getSelectionEndY() {
+        return _selectionAnchor==_selectionEdge?_caretY:_selectionEndY;
+    }
+
     public boolean isShowLineNumbers() {
         return _showLineNumbers;
     }
@@ -392,7 +417,7 @@ public class FreeScrollingTextField extends View
         double y = getScrollY() * ((double) rowHeight() / oldHeight);
         scrollTo((int) x, (int) y);
         _alphaWidth = (int) _brush.measureText("a");
-        _spaceWidth = (int) _brush.measureText(" ");
+        _spaceWidth = (int) _brush.measureText(Language.GLYPH_SPACE);
         //int idx=coordToCharIndex(getScrollX(), getScrollY());
         //if (!makeCharVisible(idx))
         {
@@ -405,6 +430,7 @@ public class FreeScrollingTextField extends View
         _fieldController.replaceText(from, charCount, text);
         _fieldController.stopTextComposing();
         _hDoc.endBatchEdit();
+        _fieldController.restartInput();
     }
 
     public void format() {
@@ -432,6 +458,10 @@ public class FreeScrollingTextField extends View
         _brush = new Paint();
         _brush.setAntiAlias(true);
         _brush.setTextSize(BASE_TEXT_SIZE_PIXELS);
+        if(_spaceWidth==0){
+            _alphaWidth = (int) _brush.measureText("a");
+            _spaceWidth = (int) _brush.measureText(Language.GLYPH_SPACE);
+        }
         _brushLine = new Paint();
         _brushLine.setAntiAlias(true);
         _brushLine.setTextSize(BASE_TEXT_SIZE_PIXELS);
@@ -825,6 +855,8 @@ public class FreeScrollingTextField extends View
 
     @Override
     protected void onDraw(Canvas canvas) {
+        long start = System.currentTimeMillis();
+        //Log.i("lua", "onDraw: start");
         canvas.save();
 
         //translate clipping region to create padding around edges
@@ -836,8 +868,15 @@ public class FreeScrollingTextField extends View
         realDraw(canvas);
 
         canvas.restore();
-
+        if (LexState.errormsg != null) {
+            int paintX = drawString(canvas, LexState.errormsg, 0, LexState.errormsg.length(), getPaddingLeft(), getScrollY() + getHeight() - getPaddingBottom() - rowHeight());
+            if (paintX > _xExtent) {
+                // record widest line seen so far
+                _xExtent = paintX;
+            }
+        }
         _navMethod.onTextDrawComplete(canvas);
+        //Log.i("lua", "onDraw: end "+(System.currentTimeMillis()-start));
     }
 
     private void realDraw(Canvas canvas) {
@@ -857,6 +896,11 @@ public class FreeScrollingTextField extends View
         int endRowNum = getEndPaintRow(canvas);
         int paintX = 0;
         int paintY = getPaintBaseline(currRowNum);
+        _selectionStartX=_leftOffset;
+        _selectionStartY=0;
+        _selectionEndX=getWidth()*2;
+        _selectionEndY=getHeight()*3;
+        _selection=false;
 
         //----------------------------------------------
         // set up initial span color
@@ -894,7 +938,7 @@ public class FreeScrollingTextField extends View
             case Lexer.KEYWORD:
                 _brush.setTypeface(_boldTypeface);
                 break;
-            case Lexer.COMMENT:
+            case Lexer.DOUBLE_SYMBOL_LINE:
                 _brush.setTypeface(_italicTypeface);
                 break;
             default:
@@ -925,7 +969,7 @@ public class FreeScrollingTextField extends View
             case Lexer.KEYWORD:
                 lastTypeface = _boldTypeface;
                 break;
-            case Lexer.COMMENT:
+            case Lexer.DOUBLE_SYMBOL_LINE:
                 lastTypeface = _italicTypeface;
                 break;
             default:
@@ -937,8 +981,7 @@ public class FreeScrollingTextField extends View
         while (currRowNum <= endRowNum) {
             int spanLen = spanOffset - currIndex;
 
-            /*String row = _hDoc.getRow(currRowNum);
-            boolean charDraw = false;
+             /*boolean charDraw = false;
             if (row.contains("\t")) {
                 charDraw = true;
             } else if (currRowNum == rowCount - 1) {
@@ -948,7 +991,7 @@ public class FreeScrollingTextField extends View
             } else if (isSelectText()) {
                 charDraw = true;
             }
-*/
+            */
             int rowLen = _hDoc.getRowSize(currRowNum);
             if (currRowNum >= rowCount) {
                 break;
@@ -962,7 +1005,12 @@ public class FreeScrollingTextField extends View
             paintX = _leftOffset;
 
             int i = 0;
-
+            /*String row = _hDoc.getRow(currRowNum);
+            Log.i("luaj", "realDraw: "+currLineNum);
+            Log.i("luaj", "realDraw: "+row);
+            if (currRowNum == rowCount - 1) {
+                row = row.substring(0,row.length()-1);
+            }*/
             while (i < rowLen) {
                 // check if formatting changes are needed
                 if (nextSpan != null && currIndex >= spanOffset) {
@@ -979,7 +1027,7 @@ public class FreeScrollingTextField extends View
                             case Lexer.KEYWORD:
                                 currTypeface = _boldTypeface;
                                 break;
-                            case Lexer.COMMENT:
+                            case Lexer.DOUBLE_SYMBOL_LINE:
                                 currTypeface = _italicTypeface;
                                 break;
                             default:
@@ -1001,29 +1049,46 @@ public class FreeScrollingTextField extends View
                     }
                 }
 
-                //if (charDraw) {
+                /*len=spanLen;
+                if (i + len >= rowLen)
+                    len = rowLen - i;
+                int end = i + len;
+                currIndex += len;
+                paintX += drawString(canvas, row, i, end, paintX, paintY);
+                i += len;
+                spanLen-=len;*/
+
                 if (currIndex == _caretPosition) {
                     drawCaret(canvas, paintX, paintY);
                 }
-
                 char c = _hDoc.charAt(currIndex);
+                /*if (LexState.erroridx > 0 && currIndex == LexState.erroridx) {
+                    drawErrorText(canvas, paintX, paintY);
+                }*/
 
                 if (_fieldController.inSelectionRange(currIndex)) {
+                    if (!_selection) {
+                        if(currIndex == _selectionAnchor) {
+                            _selectionStartX = paintX;
+                            _selectionStartY = paintY;
+                        }
+                        _selection = true;
+                    }
                     paintX += drawSelectedText(canvas, c, paintX, paintY);
                 } else {
+                    if (_selection) {
+                        if(currIndex == _selectionEdge) {
+                            _selectionEndX = paintX;
+                            _selectionEndY = paintY;
+                        }
+                        _selection = false;
+                    }
                     paintX += drawChar(canvas, c, paintX, paintY);
                 }
                 ++currIndex;
                 ++i;
                 spanLen--;
-                /*} else {
-                    if (i + spanLen > rowLen)
-                        spanLen = rowLen - i;
-                    int end = i + spanLen;
-                    currIndex += spanLen;
-                    paintX += drawString(canvas, row, i, end, paintX, paintY);
-                    i += spanLen;
-                }*/
+
             }
 
             if (_hDoc.charAt(currIndex - 1) == Language.NEWLINE)
@@ -1037,37 +1102,41 @@ public class FreeScrollingTextField extends View
             ++currRowNum;
         } // end while
         doOptionHighlightRow(canvas);
-        doOptionHighlightRow2(canvas);
         if (!isWordWrap())
             doBlockLine(canvas);
     }
 
     private void doBlockLine(Canvas canvas) {
-        ArrayList<Rect> lines = Lexer.getLines();
+        //ArrayList<Rect> lines = Lexer.getLines();
+        ArrayList<Rect> lines = _hDoc.getLines();
         if (lines == null || lines.isEmpty())
             return;
         Rect bounds = canvas.getClipBounds();
         int bt = bounds.top;
         int bb = bounds.bottom;
-        Rect curr=null;
+        Rect curr = null;
         for (Rect rect : lines) {
             /*if(rect.top==_caretRow){
                 doBlockRow(canvas,rect.bottom);
             }else if(rect.bottom==_caretRow){
                 doBlockRow(canvas,rect.top);
             }*/
+            if (rect == null)
+                continue;
+            if (rect.top == rect.bottom)
+                continue;
             int top = (rect.top + 1) * rowHeight();
-            int bottom = rect.bottom * rowHeight();
+            int bottom = (rect.bottom) * rowHeight();
             if (bottom < bt || top > bb)
                 continue;
             int left = Math.min(getCharExtent(rect.left).getFirst(), getCharExtent(rect.right).getFirst());
-            if(rect.left<_caretPosition&&rect.right>=_caretPosition){
-                if(curr==null||curr.left<rect.left)
-                curr=rect;
+            if (rect.left < _caretPosition && rect.right >= _caretPosition) {
+                if (curr == null || curr.left < rect.left)
+                    curr = rect;
             }
             canvas.drawLine(left, top, left, bottom, _brushLine);
         }
-        if(curr!=null){
+        if (curr != null) {
             int top = (curr.top + 1) * rowHeight();
             int bottom = curr.bottom * rowHeight();
             if (bottom < bt || top > bb)
@@ -1110,25 +1179,14 @@ public class FreeScrollingTextField extends View
         }
     }
 
-    private void doOptionHighlightRow2(Canvas canvas) {
-        if (LuaEditor._iserror) {
-            int y = getPaintBaseline(LuaEditor._errorline);
-            int originalColor = _brush.getColor();
-            _brush.setColor(0x40ff89e5);
-
-            int lineLength = Math.max(_xExtent, getContentWidth());
-            //canvas.drawRect(0, y+1, lineLength, y+2, _brush);
-            drawTextBackground(canvas, 0, y, lineLength);
-            //_brush.setColor(0x88000000);
-            _brush.setColor(originalColor);
-        }
-    }
-
     private int drawString(Canvas canvas, String s, int start, int end, int paintX, int paintY) {
         int len = s.length();
         if (end >= len)
-            end = len - 1;
+            end = len;
         int charWidth = (int) _brush.measureText(s, start, end);
+        _brush.setColor(0x88888888);
+        drawTextBackground(canvas, getScrollX(), paintY, getLeftOffset() + charWidth);
+        _brush.setColor(0xffff0000);
         if (paintX > getScrollX() || paintX < (getScrollX() + getContentWidth()))
             canvas.drawText(s, start, end, paintX, paintY, _brush);
         return charWidth;
@@ -1224,6 +1282,32 @@ public class FreeScrollingTextField extends View
         return advance;
     }
 
+    private int drawErrorText(Canvas canvas, int paintX, int paintY) {
+        int oldColor = _brush.getColor();
+        int advance = getAdvance('a');
+
+        _brush.setColor(0xffff0000);
+        Paint.FontMetricsInt metrics = _brush.getFontMetricsInt();
+        canvas.drawRect(paintX,
+                paintY + metrics.descent - 4,
+                paintX + advance,
+                paintY + metrics.descent,
+                _brush);
+        if (LexState.errorline > -1) {
+            int y = getPaintBaseline(LexState.errorline - 1);
+            _brush.setColor(0xffff0000);
+            int lineLength = Math.max(_xExtent, getContentWidth());
+            canvas.drawRect(0,
+                    y + metrics.descent - 2,
+                    lineLength,
+                    y + metrics.descent,
+                    _brush);
+        }
+
+        _brush.setColor(oldColor);
+        return advance;
+    }
+
     private void drawCaret(Canvas canvas, int paintX, int paintY) {
         int originalColor = _brush.getColor();
         _caretX = paintX;
@@ -1265,7 +1349,7 @@ public class FreeScrollingTextField extends View
         switch (c) {
             case 0xd83c:
             case 0xd83d:
-                advance = 0;
+                advance = 1;
                 break;
             case ' ':
                 advance = getSpaceAdvance();
@@ -1288,7 +1372,7 @@ public class FreeScrollingTextField extends View
                 break;
         }
 
-        return advance;
+        return advance==0?_spaceWidth:advance;
     }
 
     public int getAdvance(char c, int x) {
@@ -2311,6 +2395,7 @@ public class FreeScrollingTextField extends View
     }
 
     private void handleNavigationKey(int keyCode, KeyEvent event) {
+        Log.i("lua", "sendKeyEvent:2 " + event);
         if (event.isShiftPressed() && !isSelectText()) {
             invalidateCaretRow();
             _fieldController.setSelectText(true);
@@ -2331,6 +2416,12 @@ public class FreeScrollingTextField extends View
                 break;
             case KeyEvent.KEYCODE_DPAD_UP:
                 _fieldController.moveCaretUp();
+                break;
+            case KeyEvent.KEYCODE_MOVE_HOME:
+                moveCaret(0);
+                break;
+            case KeyEvent.KEYCODE_MOVE_END:
+                moveCaret(_hDoc.length());
                 break;
             default:
                 break;
@@ -2455,8 +2546,11 @@ public class FreeScrollingTextField extends View
         return super.onHoverEvent(event);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        long start = System.currentTimeMillis();
+        //("lua", "onTouchEvent: start");
         if (isFocused()) {
             _navMethod.onTouchEvent(event);
         } else {
@@ -2467,10 +2561,11 @@ public class FreeScrollingTextField extends View
                 requestFocus();
             }
         }
+        //Log.i("lua", "onTouchEvent: end "+(System.currentTimeMillis()-start));
         return true;
     }
 
-    final private boolean isPointInView(int x, int y) {
+    private boolean isPointInView(int x, int y) {
         return (x >= 0 && x < getWidth() &&
                 y >= 0 && y < getHeight());
     }
@@ -2553,8 +2648,8 @@ public class FreeScrollingTextField extends View
     //*********************************************************************
 //TODO change private
     public static class TextFieldUiState implements Parcelable {
-        public static final Parcelable.Creator<TextFieldUiState> CREATOR
-                = new Parcelable.Creator<TextFieldUiState>() {
+        public static final Creator<TextFieldUiState> CREATOR
+                = new Creator<TextFieldUiState>() {
             @Override
             public TextFieldUiState createFromParcel(Parcel in) {
                 return new TextFieldUiState(in);
@@ -2612,6 +2707,7 @@ public class FreeScrollingTextField extends View
         private final Lexer _lexer = new Lexer(this);
         private boolean _isInSelectionMode = false;
         private boolean _isInSelectionMode2;
+        private long start;
 
         /**
          * Analyze the text for programming language keywords and redraws the
@@ -2621,6 +2717,9 @@ public class FreeScrollingTextField extends View
          * Does nothing if the Lexer language is not a programming language
          */
         public void determineSpans() {
+            //start=System.currentTimeMillis();
+            //Log.i("lua", "onLex: start");
+            LexState.erroridx = -1;
             _lexer.tokenize(_hDoc);
         }
 
@@ -2635,9 +2734,16 @@ public class FreeScrollingTextField extends View
                 @Override
                 public void run() {
                     _hDoc.setSpans(results);
+                    if (LexState.lines.isEmpty() || !TextUtils.isEmpty(LexState.errormsg))
+                        _hDoc.setLines(new ArrayList<>(Lexer.getLines()));
+                    else
+                        _hDoc.setLines(new ArrayList<>(LexState.lines));
                     invalidate();
+                    System.gc();
                 }
             });
+
+            //Log.i("lua", "onLex: end "+(System.currentTimeMillis()-start));
         }
 
         //- TextFieldController -----------------------------------------------
@@ -2890,15 +2996,24 @@ public class FreeScrollingTextField extends View
         }
 
         public void stopTextComposing() {
+            if (_inputConnection != null && _inputConnection.isComposingStarted()) {
+                InputMethodManager im = (InputMethodManager) getContext()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                // This is an overkill way to inform the InputMethod that the caret
+                // might have changed position and it should re-evaluate the
+                // caps mode to use.
+                im.restartInput(FreeScrollingTextField.this);
+                _inputConnection.resetComposingState();
+            }
+        }
+
+        public void restartInput() {
             InputMethodManager im = (InputMethodManager) getContext()
                     .getSystemService(Context.INPUT_METHOD_SERVICE);
             // This is an overkill way to inform the InputMethod that the caret
             // might have changed position and it should re-evaluate the
             // caps mode to use.
             im.restartInput(FreeScrollingTextField.this);
-            if (_inputConnection != null && _inputConnection.isComposingStarted()) {
-                _inputConnection.resetComposingState();
-            }
         }
 
         //- TextFieldController -----------------------------------------------
@@ -3139,7 +3254,6 @@ public class FreeScrollingTextField extends View
             }
 
             int totalChars = _selectionEdge - _selectionAnchor;
-
             if (totalChars > 0) {
                 int originalRow = _hDoc.findRowNumber(_selectionAnchor);
                 int originalOffset = _hDoc.getRowOffset(originalRow);
@@ -3402,7 +3516,7 @@ public class FreeScrollingTextField extends View
     //*********************************************************************
     /*
      * Does not provide ExtractedText related methods
-	 */
+     */
     private class TextFieldInputConnection extends BaseInputConnection {
         private boolean _isComposing = false;
         private int _composingCharCount = 0;
@@ -3430,7 +3544,11 @@ public class FreeScrollingTextField extends View
                     paste();
                     break;
                 case android.R.id.startSelectingText:
+                    selectText(true);
+                    break;
                 case android.R.id.stopSelectingText:
+                    selectText(false);
+                    break;
                 case android.R.id.selectAll:
                     selectAll();
                     break;
@@ -3439,36 +3557,50 @@ public class FreeScrollingTextField extends View
             return false;
         }
 
+        private boolean isShifted = false;
 
         @Override
         public boolean sendKeyEvent(KeyEvent event) {
-            switch (event.getKeyCode()) {
-                case KeyEvent.KEYCODE_SHIFT_LEFT:
-                    if (isSelectText())
-                        selectText(false);
-                    else
-                        selectText(true);
+            if (KeysInterpreter.isNavigationKey(event)) {
+                if (isShifted && !isSelectText())
+                    selectText(true);
+                if (!isShifted && isSelectText())
+                    selectText(false);
+            }
+            switch (event.getAction()) {
+                case KeyEvent.ACTION_DOWN:
+                    switch (event.getKeyCode()) {
+                        case KeyEvent.KEYCODE_SHIFT_LEFT:
+                            isShifted = true;
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_LEFT:
+                            moveCaretLeft();
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_UP:
+                            moveCaretUp();
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_RIGHT:
+                            moveCaretRight();
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_DOWN:
+                            moveCaretDown();
+                            break;
+                        case KeyEvent.KEYCODE_MOVE_HOME:
+                            moveCaret(0);
+                            break;
+                        case KeyEvent.KEYCODE_MOVE_END:
+                            moveCaret(_hDoc.length());
+                            break;
+                        default:
+                            return super.sendKeyEvent(event);
+                    }
                     break;
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    moveCaretLeft();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_UP:
-                    moveCaretUp();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    moveCaretRight();
-                    break;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                    moveCaretDown();
-                    break;
-                case KeyEvent.KEYCODE_MOVE_HOME:
-                    moveCaret(0);
-                    break;
-                case KeyEvent.KEYCODE_MOVE_END:
-                    moveCaret(_hDoc.length());
-                    break;
-                default:
-                    return super.sendKeyEvent(event);
+                case KeyEvent.ACTION_UP:
+                    switch (event.getKeyCode()) {
+                        case KeyEvent.KEYCODE_SHIFT_LEFT:
+                            isShifted = false;
+                            break;
+                    }
             }
             return true;
         }

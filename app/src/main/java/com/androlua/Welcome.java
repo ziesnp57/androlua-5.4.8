@@ -11,8 +11,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import androidx.annotation.NonNull;
 import android.view.Gravity;
 import android.widget.TextView;
 
@@ -74,6 +72,24 @@ public class Welcome extends Activity {
         }
         if (checkInfo()) {
             if (Build.VERSION.SDK_INT >= 23) {
+
+                LuaState L = LuaStateFactory.newLuaState();
+                L.openLibs();
+                try {
+                    if (L.LloadBuffer(LuaUtil.readAsset(Welcome.this, "init.lua"), "init") == 0) {
+                        if (L.pcall(0, 0, 0) == 0) {
+                            int func = L.getGlobal("check_permissions");
+                            if (func == LuaState.LUA_TBOOLEAN && L.toBoolean(-1)) {
+                                new UpdateTask().execute();
+                                return;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                }
+
+
                 try {
                     permissions = new ArrayList<String>();
                     String[] ps2 = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).requestedPermissions;
@@ -109,7 +125,7 @@ public class Welcome extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         new UpdateTask().execute();
     }
@@ -155,7 +171,7 @@ public class Welcome extends Activity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        return false;
+        return !new File(app.getLuaPath("main.lua")).exists();
     }
 
 
@@ -188,7 +204,7 @@ public class Welcome extends Activity {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
 
             try {

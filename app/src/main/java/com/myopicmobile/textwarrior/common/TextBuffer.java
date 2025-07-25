@@ -8,13 +8,18 @@
  */
 package com.myopicmobile.textwarrior.common;
 
+import android.graphics.Rect;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
 
 //TODO Have all methods work with charOffsets and move all gap handling to logicalToRealIndex()
-public class TextBuffer implements java.lang.CharSequence
+public class TextBuffer implements CharSequence
 {
+
+	private ArrayList<Rect> _lines;
 
 	@Override
 	public int length()
@@ -436,9 +441,22 @@ public class TextBuffer implements java.lang.CharSequence
 	}
 
 	private void onAdd(int charOffset,int totalChars){
+		if(_spans==null||_spans.isEmpty())
+			return;
 		Pair s = findSpan(charOffset);
 		Pair p=_spans.get(s.getFirst());
 		p.setFirst(p.getFirst()+totalChars);
+		if(_lines==null||_lines.isEmpty())
+			return;
+		for (Rect line : _lines) {
+			if(line==null)
+				continue;
+			if(line.left>charOffset)
+				line.left+=totalChars;
+			if(line.right>charOffset)
+				line.right+=totalChars;
+
+		}
 	}
 	
 	private void onDel(int charOffset,int totalChars){
@@ -483,6 +501,16 @@ public class TextBuffer implements java.lang.CharSequence
 					}
 				}
 			}
+		}
+		if(_lines==null||_lines.isEmpty())
+			return;
+		for (Rect line : _lines) {
+			if(line==null)
+				continue;
+			if(line.left>charOffset)
+				line.left-=totalChars;
+			if(line.right>charOffset)
+				line.right-=totalChars;
 
 		}
 	}
@@ -727,6 +755,13 @@ public class TextBuffer implements java.lang.CharSequence
 		}
 		return new String(buf);
 	}
-	
-	
+
+
+	public void setLines(ArrayList<Rect> lines) {
+		_lines=lines;
+	}
+
+	public ArrayList<Rect> getLines() {
+		return _lines;
+	}
 }

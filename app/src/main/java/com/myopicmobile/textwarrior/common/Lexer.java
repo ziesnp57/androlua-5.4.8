@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2013 Tah Wei Hoon.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License Version 2.0,
+ * with full text available at http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ * This software is provided "as is". Use at your own risk.
+ */
 package com.myopicmobile.textwarrior.common;
 
 import android.graphics.Rect;
@@ -6,31 +14,70 @@ import android.util.Log;
 import com.androlua.LuaLexer;
 import com.androlua.LuaTokenTypes;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import org.luaj.vm2.compiler.LexState;
+
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+//import static com.myopicmobile.textwarrior.common.LuaTokenTypes;
 
+/**
+ * Does lexical analysis of a text for C-like languages.
+ * The programming language syntax used is set as a static class variable.
+ */
 public class Lexer {
-    public final static int UNKNOWN = -1; //未知
-    public final static int NORMAL = 0; //通用
-    public final static int KEYWORD = 1;//关键字
-    public final static int OPERATOR = 2;//一元操作符
-    public final static int TOPERATOR = 3;//二元操作符
-    public final static int NAME = 4; //变量名
-    public final static int FUNC = 5; //函数名
-    public final static int REQUIRE = 6; //导入包
-    public final static int NUMBER = 7; //数字
-    public final static int BASE = 8; //基础库
-    public final static int KEY = 9; //键值
-    public final static int STRING = 10; //字符串
-    public final static int LONGSTRING = 11;
-    public final static int BOOL = 12;
-    public final static int NIL = 13;
-    public final static int EXIT = 14;
-    public final static int COMMENT = 30; //注释
+    public final static int UNKNOWN = -1;
+    public final static int NORMAL = 0;
+    public final static int KEYWORD = 1;
+    public final static int OPERATOR = 2;
+    public final static int NAME = 3;
+    public final static int LITERAL = 4;
+    public final static int GLOBAL = 5;
+    public final static int UPVAL = 6;
+    public final static int LOCAL = 7;
+    public final static int STRING = 8;
+    public final static int COMMENT = 9;
 
+
+    /**
+     * A word that starts with a special symbol, inclusive.
+     * Examples:
+     * :ruby_symbol
+     */
+    public final static int SINGLE_SYMBOL_WORD = 10;
+    /**
+     * Tokens that extend from a single start symbol, inclusive, until the end of line.
+     * Up to 2 types of symbols are supported per language, denoted by A and B
+     * Examples:
+     * #include "myCppFile"
+     * #this is a comment in Python
+     * %this is a comment in Prolog
+     */
+    public final static int SINGLE_SYMBOL_LINE_A = 20;
+    public final static int SINGLE_SYMBOL_LINE_B = 21;
+    /**
+     * Tokens that extend from a two start symbols, inclusive, until the end of line.
+     * Examples:
+     * //this is a comment in C
+     */
+    public final static int DOUBLE_SYMBOL_LINE = 30;
+    /**
+     * Tokens that are enclosed between a start and end sequence, inclusive,
+     * that can span multiple lines. The start and end sequences contain exactly
+     * 2 symbols.
+     * Examples:
+     * {- this is a...
+     * ...multi-line comment in Haskell -}
+     */
+    public final static int DOUBLE_SYMBOL_DELIMITED_MULTILINE = 40;
+    /**
+     * Tokens that are enclosed by the same single symbol, inclusive, and
+     * do not span over more than one line.
+     * Examples: 'c', "hello world"
+     */
+    public final static int SINGLE_SYMBOL_DELIMITED_A = 50;
+    public final static int SINGLE_SYMBOL_DELIMITED_B = 51;
+    private final static int MAX_KEYWORD_LENGTH = 127;
     private static Language _globalLanguage = LanguageNonProg.getInstance();
     LexCallback _callback = null;
     private DocumentProvider _hDoc;
@@ -86,17 +133,19 @@ public class Lexer {
     }
 
     public void tokenize(DocumentProvider hDoc) {
+        LexState.errormsg=null;
         if (!Lexer.getLanguage().isProgLang()) {
             return;
         }
 
         //tokenize will modify the state of hDoc; make a copy
         setDocument(new DocumentProvider(hDoc));
-        if (_workerThread == null) {
+        cancelTokenize();
+        try {
             _workerThread = new LexThread(this);
             _workerThread.start();
-        } else {
-            _workerThread.restart();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -149,6 +198,8 @@ public class Lexer {
         public LexThread(Lexer p) {
             _lexManager = p;
             _abort = new Flag();
+            _tokens = new ArrayList<>();
+            _tokens.add(new Pair(_hDoc.length(), Lexer.NORMAL));
         }
 
         @Override
@@ -156,8 +207,15 @@ public class Lexer {
             do {
                 rescan = false;
                 _abort.clear();
-                if (Lexer.getLanguage() instanceof LanguageLua) {
-                    tokenize();
+                try {
+                    if (Lexer.getLanguage() instanceof LanguageLua)
+                        tokenize();
+                    else
+                        tokenize2();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    _tokens = new ArrayList<>();
+                    rescan = false;
                 }
             }
             while (rescan);
@@ -186,10 +244,22 @@ public class Lexer {
             ArrayList<Rect> lines = new ArrayList<>(8196);
             ArrayList<Rect> lineStacks = new ArrayList<>(8196);
             ArrayList<Rect> lineStacks2 = new ArrayList<>(8196);
+            if (rowCount*5 < maxRow){
+                if(!LuaParser.lexer(new DocumentProvider(hDoc),_abort)&&_tokens!=null&&_tokens.size()>4) {
+                    //Log.i("luaj", "tokenize: "+_tokens.size());
+                    _abort.set();
+                    return;
+                }
+            }else {
+                LuaParser.reset();
+            }
+            HashMap<String, ArrayList<Pair>> locals = LuaParser.getLocalMap();
+            HashMap<String, ArrayList<Pair>> values = LuaParser.getValueMap();
 
             LuaLexer lexer = new LuaLexer(hDoc);
             Language language = Lexer.getLanguage();
             language.clearUserWord();
+            LuaParser.clearUserWord();
             try {
                 int idx = 0;
 
@@ -201,9 +271,7 @@ public class Lexer {
                 Pair lastPair = null;
                 int lastLen = 0;
                 StringBuilder bul = new StringBuilder();
-                StringBuilder bul2 = new StringBuilder();
                 boolean isModule = false;
-                boolean isClass = false;
                 boolean hasDo = true;
                 int lastNameIdx = -1;
                 while (!_abort.isSet()) {
@@ -212,23 +280,20 @@ public class Lexer {
                     if (type == null)
                         break;
                     int len = lexer.yylength();
-
+                    idx += len;
                     if (isModule && lastType == LuaTokenTypes.STRING && type != LuaTokenTypes.STRING) {
                         String mod = bul.toString();
                         if (bul.length() > 2) {
-                            language.addUserWord(mod.substring(1, mod.length() - 1), NAME);
+                            String m = mod.substring(1, mod.length() - 1);
+                            String[] ms = m.split("\\.|\\$");
+                            String na = ms[ms.length - 1];
+                            language.addUserWord(na);
+                            LuaParser.addUserWord(na + " :import");
                         }
                         bul = new StringBuilder();
                         isModule = false;
                     }
-                    else if (isClass && lastType == LuaTokenTypes.STRING && type != LuaTokenTypes.STRING) {
-                        String mod = bul2.toString();
-                        if (bul2.length() > 2) {
-                            setClassName(mod.substring(1, mod.length() - 1));
-                        }
-                        bul2 = new StringBuilder();
-                        isClass = false;
-                    }
+
                     /*if (lastType2 == type && lastPair != null) {
                         lastPair.setFirst(lastLen += len);
                         continue;
@@ -236,6 +301,10 @@ public class Lexer {
                     lastLen = len;
                     switch (type) {
                         case DO:
+                            if (lastType == LuaTokenTypes.DOT) {
+                                tokens.add(new Pair(len, NORMAL));
+                                break;
+                            }
                             if (hasDo) {
                                 lineStacks.add(new Rect(lexer.yychar(), lexer.yyline(), 0, lexer.yyline()));
                             }
@@ -245,6 +314,10 @@ public class Lexer {
                             break;
                         case WHILE:
                         case FOR:
+                            if (lastType == LuaTokenTypes.DOT) {
+                                tokens.add(new Pair(len, NORMAL));
+                                break;
+                            }
                             hasDo = false;
                             lineStacks.add(new Rect(lexer.yychar(), lexer.yyline(), 0, lexer.yyline()));
                             //关键字
@@ -253,17 +326,27 @@ public class Lexer {
                         case FUNCTION:
                         case IF:
                         case SWITCH:
+                        //case TRY:
+                        case WHEN:
+                            if (lastType == LuaTokenTypes.DOT) {
+                                tokens.add(new Pair(len, NORMAL));
+                                break;
+                            }
                             lineStacks.add(new Rect(lexer.yychar(), lexer.yyline(), 0, lexer.yyline()));
                             //关键字
                             tokens.add(new Pair(len, KEYWORD));
                             break;
                         case END:
+                            if (lastType == LuaTokenTypes.DOT) {
+                                tokens.add(new Pair(len, NORMAL));
+                                break;
+                            }
                             int size = lineStacks.size();
                             if (size > 0) {
                                 Rect rect = lineStacks.remove(size - 1);
                                 rect.bottom = lexer.yyline();
                                 rect.right = lexer.yychar();
-                                if (rect.bottom - rect.top>1)
+                                if (rect.bottom - rect.top > 1)
                                     lines.add(rect);
                             }
                             //关键字
@@ -272,13 +355,6 @@ public class Lexer {
                             break;
                         case TRUE:
                         case FALSE:
-                            tokens.add(new Pair(len, BOOL));
-                            hasDo = true;
-                            break;
-                        case NIL:
-                            //关键字
-                            tokens.add(new Pair(len, NIL));
-                            break;
                         case NOT:
                         case AND:
                         case OR:
@@ -291,14 +367,21 @@ public class Lexer {
                         case LOCAL:
                         case REPEAT:
                         case UNTIL:
+                        case NIL:
+
                         case CASE:
                         case DEFAULT:
                         case CONTINUE:
                         case GOTO:
                         case LAMBDA:
-                        case WHEN:
                         case DEFER:
+                        //case CATCH:
+                        //case FINALLY:
                             //关键字
+                            if (lastType == LuaTokenTypes.DOT) {
+                                tokens.add(new Pair(len, NORMAL));
+                                break;
+                            }
                             tokens.add(new Pair(len, KEYWORD));
                             break;
                         case LCURLY:
@@ -312,138 +395,139 @@ public class Lexer {
                                 Rect rect = lineStacks2.remove(size2 - 1);
                                 rect.bottom = lexer.yyline();
                                 rect.right = lexer.yychar();
-                                if (rect.bottom - rect.top>1)
+                                if (rect.bottom - rect.top > 1)
                                     lines.add(rect);
                             }
                             //符号
                             tokens.add(pair = new Pair(len, OPERATOR));
                             break;
-                        case LPAREN: //括号
-                            //符号
-                            if(lastType == LuaTokenTypes.NAME){
-                                Pair p = tokens.get(tokens.size()-1);
-                                if(p.getSecond()==NORMAL) {
-                                    p.setSecond(FUNC);
-                                }
-                            }
-                            tokens.add(pair = new Pair(len, OPERATOR));
-                            break;
+                        case LPAREN:
                         case RPAREN:
-                        case LBRACK: //中括号
+                        case LBRACK:
                         case RBRACK:
-                        case COMMA: //逗号
-                        case DOT: //点
+                        case COMMA:
+                        case DOT:
                             //符号
                             tokens.add(pair = new Pair(len, OPERATOR));
                             break;
                         case STRING:
-                            //字符串
-                            tokens.add(pair = new Pair(len, STRING));
-                            if (rowCount > maxRow)
-                                break;
-
-                            if (lastName.equals("require")) {
-                                isModule = true;
-                            }else if(lastName.equals("import")){
-                                isClass = true;
-                            }
-                            if (isModule) {
-                                bul.append(lexer.yytext());
-                            }
-                            if(isClass){
-                                bul2.append(lexer.yytext());
-                            }
-                            break;
                         case LONG_STRING:
                             //字符串
-                            tokens.add(pair = new Pair(len, LONGSTRING));
+                            tokens.add(pair = new Pair(len, SINGLE_SYMBOL_DELIMITED_A));
                             if (rowCount > maxRow)
                                 break;
 
-                            if (lastName.equals("require")) {
+                            if (lastName.equals("require") || lastName.equals("import"))
                                 isModule = true;
-                            }else if(lastName.equals("import")){
-                                isClass = true;
-                            }
-                            if (isModule) {
+
+                            if (isModule)
                                 bul.append(lexer.yytext());
-                            }
-                            if(isClass){
-                                bul2.append(lexer.yytext());
-                            }
                             break;
                         case NAME:
                             if (rowCount > maxRow) {
                                 tokens.add(new Pair(len, NORMAL));
                                 break;
                             }
+
+
                             if (lastType2 == LuaTokenTypes.NUMBER) {
-                                Pair p = tokens.get(tokens.size()-1);
-                                p.setSecond(NUMBER);
-                                p.setFirst(p.getFirst()+len);
+                                Pair p = tokens.get(tokens.size() - 1);
+                                p.setSecond(NORMAL);
+                                p.setFirst(p.getFirst() + len);
+                                break;
                             }
                             String name = lexer.yytext();
                             if (lastType == LuaTokenTypes.FUNCTION) {
                                 //函数名
-                                tokens.add(new Pair(len, FUNC));
-                                language.addUserWord(name, FUNC);
-                            }else if(name.equals("exit")){
-                                tokens.add(new Pair(len, EXIT));
+                                tokens.add(new Pair(len, LITERAL));
+                                language.addUserWord(name);
+                                LuaParser.addUserWord(name + " :function");
+                            } else if (language.isUserWord(name)) {
+                                tokens.add(new Pair(len, LITERAL));
                             } else if (lastType == LuaTokenTypes.GOTO || lastType == LuaTokenTypes.AT) {
-                                tokens.add(new Pair(len, KEYWORD));
+                                tokens.add(new Pair(len, LITERAL));
                             } else if (lastType == LuaTokenTypes.MULT && lastType3 == LuaTokenTypes.LOCAL) {
                                 tokens.add(new Pair(len, OPERATOR));
                             } else if (language.isBasePackage(name)) {
-                                tokens.add(new Pair(len, BASE));
+                                tokens.add(new Pair(len, NAME));
                             } else if (lastType == LuaTokenTypes.DOT && language.isBasePackage(lastName) && language.isBaseWord(lastName, name)) {
                                 //标准库函数
-                                tokens.add(new Pair(len, BASE));
-                            } else if (lastType == LuaTokenTypes.DOT && (!language.isBasePackage(lastName))) {
-                                //KEY
-                                tokens.add(new Pair(len, KEY));
+                                tokens.add(new Pair(len, NAME));
                             } else if (language.isName(name)) {
-                                tokens.add(new Pair(len, BASE));
+                                tokens.add(new Pair(len, NAME));
                             } else {
                                 tokens.add(new Pair(len, NORMAL));
-                                language.addUserWord(name,NORMAL);
                             }
 
-                            if (lastType == LuaTokenTypes.ASSIGN && name.equals("require")) {
-                                language.addUserWord(lastName,REQUIRE);
-                                if (lastNameIdx>=0) {
-                                    Pair p = tokens.get(lastNameIdx-1);
-                                    p.setSecond(REQUIRE);
-                                    lastNameIdx=-1;
+                            if (lastType != LuaTokenTypes.DOT) {
+                                boolean loc = false;
+                                /*if (locals.containsKey(name)) {
+                                    ArrayList<Pair> ls = locals.get(name);
+                                    for (Pair l : ls) {
+                                        if (l.getFirst() == idx) {
+                                            Pair p = tokens.get(tokens.size() - 1);
+                                            p.setSecond(LOCAL);
+                                            loc = true;
+                                            break;
+                                        }
+                                    }
+                                }*/
+                                if (!loc && values.containsKey(name)) {
+                                    ArrayList<Pair> ls = values.get(name);
+                                    for (Pair l : ls) {
+                                        if (l.getFirst() == idx) {
+                                            Pair p = tokens.get(tokens.size() - 1);
+                                            int tp = l.getSecond();
+                                            if (tp == LexState.VVOID) {
+                                                if (p.getSecond() == NORMAL)
+                                                    p.setSecond(GLOBAL);
+                                                break;
+                                            } else if (tp == LexState.VUPVAL) {
+                                                p.setSecond(UPVAL);
+                                                break;
+                                            } else if (tp == LexState.VLOCAL) {
+                                                p.setSecond(LOCAL);
+                                                break;
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            lastNameIdx=tokens.size();
+                            if (lastType == LuaTokenTypes.ASSIGN && name.equals("require")) {
+                                language.addUserWord(lastName);
+                                LuaParser.addUserWord(lastName + " :require");
+                                if (lastNameIdx >= 0) {
+                                    Pair p = tokens.get(lastNameIdx - 1);
+                                    p.setSecond(LITERAL);
+                                    lastNameIdx = -1;
+                                }
+                            }
+                            lastNameIdx = tokens.size();
                             lastName = name;
                             break;
                         case SHORT_COMMENT:
                         case BLOCK_COMMENT:
                         case DOC_COMMENT:
                             //注释
-                            tokens.add(pair = new Pair(len, COMMENT));
+                            tokens.add(pair = new Pair(len, DOUBLE_SYMBOL_LINE));
                             break;
                         case NUMBER:
                             //数字
-                            tokens.add(new Pair(len, NUMBER));
-                            language.addUserWord(lexer.yytext(),NUMBER);
+                            tokens.add(new Pair(len, LITERAL));
                             break;
                         default:
                             tokens.add(pair = new Pair(len, NORMAL));
                     }
-                    lastType3=lastType;
+                    lastType3 = lastType;
                     if (type != LuaTokenTypes.WHITE_SPACE
                         //&& type != LuaTokenTypes.NEWLINE && type != LuaTokenTypes.NL_BEFORE_LONGSTRING
-                    ) {
+                            ) {
                         lastType = type;
                     }
                     lastType2 = type;
                     if (pair != null)
                         lastPair = pair;
-                    idx += len;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -451,46 +535,191 @@ public class Lexer {
             }
             if (tokens.isEmpty()) {
                 // return value cannot be empty
-                tokens.add(new Pair(0, NORMAL));
+                tokens.add(new Pair(hDoc.length(), NORMAL));
             }
             language.updateUserWord();
             mLines = lines;
             _tokens = tokens;
         }
-    }//end inner class
 
-    public void setClassName(String cls){
-        try {
-            Class<?> c = Class.forName(cls);
-            List<Field> fieldList = new ArrayList<>();
-            List<Method> methodList = new ArrayList<>(new ArrayList<>(Arrays.asList(c.getDeclaredMethods())));
-            while (c != null) {
-                fieldList.addAll(new ArrayList<>(Arrays.asList(c.getDeclaredFields())));
-                c = c.getSuperclass();
+
+        /**
+         * Scans the document referenced by _lexManager for tokens.
+         * The result is stored internally.
+         */
+        public void tokenize2() {
+            DocumentProvider hDoc = getDocument();
+            Language language = Lexer.getLanguage();
+            ArrayList<Pair> tokens = new ArrayList<Pair>();
+
+            if (!language.isProgLang()) {
+                tokens.add(new Pair(0, NORMAL));
+                _tokens = tokens;
+                return;
             }
-            Field[] fields = new Field[fieldList.size()];
-            Method[] methods = new Method[methodList.size()];
-            fieldList.toArray(fields);
-            methodList.toArray(methods);
-            String[] llst = new String[fields.length + methods.length];
-            int l = 0;
-            for (Method m : methods) {
-                llst[l] = m.getName();
-                l = l + 1;
+
+            char[] candidateWord = new char[MAX_KEYWORD_LENGTH];
+            int currentCharInWord = 0;
+            int currentCharStartWord = 0;
+
+            int spanStartPosition = 0;
+            int workingPosition = 0;
+            int state = UNKNOWN;
+            char prevChar = 0;
+
+            hDoc.seekChar(0);
+            while (hDoc.hasNext() && !_abort.isSet()) {
+                char currentChar = hDoc.next();
+
+                switch (state) {
+                    case UNKNOWN: //fall-through
+                    case NORMAL: //fall-through
+                    case KEYWORD: //fall-through
+                    case NAME: //fall-through
+                    case SINGLE_SYMBOL_WORD:
+                        int pendingState = state;
+                        boolean stateChanged = false;
+                        if (language.isLineStart(prevChar, currentChar)) {
+                            pendingState = DOUBLE_SYMBOL_LINE;
+                            stateChanged = true;
+                        } else if (language.isMultilineStartDelimiter(prevChar, currentChar)) {
+                            pendingState = DOUBLE_SYMBOL_DELIMITED_MULTILINE;
+                            stateChanged = true;
+                        } else if (language.isDelimiterA(currentChar)) {
+                            pendingState = SINGLE_SYMBOL_DELIMITED_A;
+                            stateChanged = true;
+                        } else if (language.isDelimiterB(currentChar)) {
+                            pendingState = SINGLE_SYMBOL_DELIMITED_B;
+                            stateChanged = true;
+                        } else if (language.isLineAStart(currentChar)) {
+                            pendingState = SINGLE_SYMBOL_LINE_A;
+                            stateChanged = true;
+                        } else if (language.isLineBStart(currentChar)) {
+                            pendingState = SINGLE_SYMBOL_LINE_B;
+                            stateChanged = true;
+                        }
+
+
+                        if (stateChanged) {
+                            if (pendingState == DOUBLE_SYMBOL_LINE ||
+                                    pendingState == DOUBLE_SYMBOL_DELIMITED_MULTILINE) {
+                                // account for previous char
+                                spanStartPosition = workingPosition - 1;
+                                if (tokens.get(tokens.size() - 1).getFirst() == spanStartPosition) {
+                                    tokens.remove(tokens.size() - 1);
+                                }
+                            } else {
+                                spanStartPosition = workingPosition;
+                            }
+
+                            // If a span appears mid-word, mark the chars preceding
+                            // it as NORMAL, if the previous span isn't already NORMAL
+                            if (currentCharInWord > 0 && state != NORMAL) {
+                                tokens.add(new Pair(workingPosition - currentCharInWord, NORMAL));
+                            }
+
+                            state = pendingState;
+                            tokens.add(new Pair(spanStartPosition, state));
+                            currentCharInWord = 0;
+                        } else if (language.isWhitespace(currentChar) || language.isOperator(currentChar)) {
+                            if (currentCharInWord > 0) {
+                                // full word obtained; mark the beginning of the word accordingly
+                                if (language.isWordStart(candidateWord[0])) {
+                                    spanStartPosition = workingPosition - currentCharInWord;
+                                    state = SINGLE_SYMBOL_WORD;
+                                    tokens.add(new Pair(spanStartPosition, state));
+                                } else if (language.isKeyword(new String(candidateWord, 0, currentCharInWord))) {
+                                    spanStartPosition = workingPosition - currentCharInWord;
+                                    state = KEYWORD;
+                                    tokens.add(new Pair(spanStartPosition, state));
+                                } else if (language.isName(new String(candidateWord, 0, currentCharInWord))) {
+                                    spanStartPosition = workingPosition - currentCharInWord;
+                                    state = NAME;
+                                    tokens.add(new Pair(spanStartPosition, state));
+                                } else if (state != NORMAL) {
+                                    spanStartPosition = workingPosition - currentCharInWord;
+                                    state = NORMAL;
+                                    tokens.add(new Pair(spanStartPosition, state));
+                                }
+                                currentCharInWord = 0;
+                            }
+
+                            // mark operators as normal
+                            if (state != NORMAL && language.isOperator(currentChar)) {
+                                state = NORMAL;
+                                tokens.add(new Pair(workingPosition, state));
+                            }
+                        } else if (currentCharInWord < MAX_KEYWORD_LENGTH) {
+                            // collect non-whitespace chars up to MAX_KEYWORD_LENGTH
+                            candidateWord[currentCharInWord] = currentChar;
+                            currentCharInWord++;
+                        }
+                        break;
+
+
+                    case DOUBLE_SYMBOL_LINE: // fall-through
+                    case SINGLE_SYMBOL_LINE_A: // fall-through
+                    case SINGLE_SYMBOL_LINE_B:
+                        if (language.isMultilineStartDelimiter(prevChar, currentChar)) {
+                            state = DOUBLE_SYMBOL_DELIMITED_MULTILINE;
+                        } else if (currentChar == '\n') {
+                            state = UNKNOWN;
+                        }
+                        break;
+
+
+                    case SINGLE_SYMBOL_DELIMITED_A:
+                        if ((language.isDelimiterA(currentChar) || currentChar == '\n')
+                                && !language.isEscapeChar(prevChar)) {
+                            state = UNKNOWN;
+                        }
+                        // consume escape of the escape character by assigning
+                        // currentChar as something else so that it would not be
+                        // treated as an escape char in the next iteration
+                        else if (language.isEscapeChar(currentChar) && language.isEscapeChar(prevChar)) {
+                            currentChar = ' ';
+                        }
+                        break;
+
+
+                    case SINGLE_SYMBOL_DELIMITED_B:
+                        if ((language.isDelimiterB(currentChar) || currentChar == '\n')
+                                && !language.isEscapeChar(prevChar)) {
+                            state = UNKNOWN;
+                        }
+                        // consume escape of the escape character by assigning
+                        // currentChar as something else so that it would not be
+                        // treated as an escape char in the next iteration
+                        else if (language.isEscapeChar(currentChar)
+                                && language.isEscapeChar(prevChar)) {
+                            currentChar = ' ';
+                        }
+                        break;
+
+                    case DOUBLE_SYMBOL_DELIMITED_MULTILINE:
+                        if (language.isMultilineEndDelimiter(prevChar, currentChar)) {
+                            state = UNKNOWN;
+                        }
+                        break;
+
+                    default:
+                        TextWarriorException.fail("Invalid state in TokenScanner");
+                        break;
+                }
+                ++workingPosition;
+                prevChar = currentChar;
             }
-            for (Field f : fields) {
-                llst[l] = f.getName();
-                l = l + 1;
+            // end state machine
+
+
+            if (tokens.isEmpty()) {
+                // return value cannot be empty
+                tokens.add(new Pair(0, NORMAL));
             }
-            try {
-                String name = c.getName();
-                LanguageLua.classfunc.put(name,llst);
-            }catch (NullPointerException er){
-                er.printStackTrace();
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+
+            _tokens = tokens;
         }
-    }
 
+
+    }//end inner class
 }

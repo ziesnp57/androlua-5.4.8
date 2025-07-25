@@ -1508,11 +1508,11 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
      * Check if the given drawer view is currently in an open state.
      * To be considered "open" the drawer must have settled into its fully
      * visible state. To check for partial visibility use
-     * {@link #isDrawerVisible(android.view.View)}.
+     * {@link #isDrawerVisible(View)}.
      *
      * @param drawer Drawer view to check
      * @return true if the given drawer view is in an open state
-     * @see #isDrawerVisible(android.view.View)
+     * @see #isDrawerVisible(View)
      */
     public boolean isDrawerOpen(View drawer) {
         if (!isDrawerView(drawer)) {
@@ -1544,7 +1544,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
      *
      * @param drawer Drawer view to check
      * @return true if the given drawer is visible on-screen
-     * @see #isDrawerOpen(android.view.View)
+     * @see #isDrawerOpen(View)
      */
     public boolean isDrawerVisible(View drawer) {
         if (!isDrawerView(drawer)) {
@@ -1589,7 +1589,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
     protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
         return p instanceof LayoutParams
                 ? new LayoutParams((LayoutParams) p)
-                : p instanceof ViewGroup.MarginLayoutParams
+                : p instanceof MarginLayoutParams
                 ? new LayoutParams((MarginLayoutParams) p)
                 : new LayoutParams(p);
     }
@@ -1788,8 +1788,8 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
             dest.writeInt(openDrawerGravity);
         }
 
-        public static final Parcelable.Creator<SavedState> CREATOR =
-                new Parcelable.Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR =
+                new Creator<SavedState>() {
             @Override
             public SavedState createFromParcel(Parcel source) {
                 return new SavedState(source);
@@ -1968,7 +1968,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
         }
     }
 
-    public static class LayoutParams extends ViewGroup.MarginLayoutParams {
+    public static class LayoutParams extends MarginLayoutParams {
 
         public int gravity = Gravity.NO_GRAVITY;
         float onScreen;
@@ -2001,7 +2001,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
             super(source);
         }
 
-        public LayoutParams(ViewGroup.MarginLayoutParams source) {
+        public LayoutParams(MarginLayoutParams source) {
             super(source);
         }
     }
@@ -2037,8 +2037,8 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
 			child.dispatchApplyWindowInsets(wi);
 		}
 
-		public static void applyMarginInsets(ViewGroup.MarginLayoutParams lp, Object insets,
-											 int gravity) {
+		public static void applyMarginInsets(MarginLayoutParams lp, Object insets,
+                                             int gravity) {
 			WindowInsets wi = (WindowInsets) insets;
 			if (gravity == Gravity.LEFT) {
 				wi = wi.replaceSystemWindowInsets(wi.getSystemWindowInsetLeft(),
@@ -2058,7 +2058,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
 		}
 
 		public static Drawable getDefaultStatusBarBackground(Context context) {
-			final TypedArray a = context.obtainStyledAttributes((int[]) THEME_ATTRS);
+			final TypedArray a = context.obtainStyledAttributes(THEME_ATTRS);
 			try {
 				return a.getDrawable(0);
 			} finally {
@@ -2066,7 +2066,7 @@ public class DrawerLayout extends ViewGroup implements DrawerLayoutImpl {
 			}
 		}
 
-		static class InsetsListener implements View.OnApplyWindowInsetsListener {
+		static class InsetsListener implements OnApplyWindowInsetsListener {
 			@Override
 			public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
 				final DrawerLayoutImpl drawerLayout = (DrawerLayoutImpl) v;

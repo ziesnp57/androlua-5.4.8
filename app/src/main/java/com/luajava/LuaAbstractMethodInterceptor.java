@@ -53,7 +53,7 @@ public class LuaAbstractMethodInterceptor implements MethodInterceptor {
                         ret = LuaState.convertLuaNumber((Double) ret, retType);
                     }
                 }
-            } catch (LuaError e) {
+            } catch (LuaException e) {
                 mContext.sendError(methodName, e);
             }
             if (ret == null)

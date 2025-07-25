@@ -262,7 +262,15 @@ public final class StdCatchBuilder implements CatchBuilder {
         return result;
     }
 
-
+    /**
+     * Makes a {@link CatchTable#Entry} for the given block range and
+     * handlers.
+     *
+     * @param start {@code non-null;} the start block for the range (inclusive)
+     * @param end {@code non-null;} the start block for the range (also inclusive)
+     * @param handlers {@code non-null;} the handlers for the range
+     * @param addresses {@code non-null;} address objects for each block
+     */
     private static CatchTable.Entry makeEntry(BasicBlock start,
             BasicBlock end, CatchHandlerList handlers,
             BlockAddresses addresses) {

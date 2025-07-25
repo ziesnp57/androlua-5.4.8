@@ -1,5 +1,6 @@
 package com.androlua;
 
+import android.annotation.SuppressLint;
 import android.app.*;
 import android.view.*;
 import android.os.*;
@@ -7,6 +8,7 @@ import android.widget.TextView;
 
 import com.luajava.*;
 
+@SuppressLint("ValidFragment")
 public class LuaFragment extends Fragment {
 
     private LuaTable mLayout = null;
@@ -14,10 +16,14 @@ public class LuaFragment extends Fragment {
     private LuaObject mLoadLayout = null;
     private View mView;
 
-    public LuaFragment() {
-
+   public LuaFragment(LuaTable layout) {
+        super();
+        mLayout=layout;
     }
-
+    public LuaFragment(View layout) {
+        super();
+        mView=layout;
+    }
     /*
         public LuaFragment(LuaTable layout){
             mLoadLayout=layout.getLuaState().getLuaObject("loadlayout");

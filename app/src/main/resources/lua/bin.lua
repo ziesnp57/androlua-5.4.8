@@ -16,7 +16,7 @@ import "java.util.zip.ZipEntry"
 import "android.app.ProgressDialog"
 import "java.util.zip.CheckedOutputStream"
 import "java.util.zip.Adler32"
-import "java.lang.String"
+
 local bin_dlg, error_dlg
 local function update(s)
     bin_dlg.setMessage(s)
@@ -37,9 +37,8 @@ local function create_bin_dlg()
         return
     end
     bin_dlg = ProgressDialog(activity);
-    bin_dlg.setTitle("正在打包测试");
+    bin_dlg.setTitle("正在打包");
     bin_dlg.setMax(100);
-    bin_dlg.hide()
 end
 
 local function create_error_dlg2()
@@ -85,7 +84,7 @@ local function binapk(luapath, apkpath)
     end
 
 
-    local tmp = luajava.luadir .. "/tmp.apk"
+    local tmp = activity.getLuaPath("tmp.apk")
     local info = activity.getApplicationInfo()
     local ver = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName
     local code = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode
@@ -203,7 +202,7 @@ local function binapk(luapath, apkpath)
                     table.insert(errbuffer, err)
                 end
             elseif name:find("%.aly$") then
-                local path, err = console.build_aly(luapath .. dir .. name)
+                local path, err = console.build(luapath .. dir .. name)
                 if path then
                     name = name:gsub("aly$", "lua")
                     if replace["assets/" .. dir .. name] then
@@ -283,12 +282,12 @@ local function binapk(luapath, apkpath)
     end
 
     function touint32(i)
-        return string.char(
-            i & 0xFF,
-            (i >> 8) & 0xFF,
-            (i >> 16) & 0xFF,
-            (i >> 24) & 0xFF
-        )
+        local code = string.format("%08x", i)
+        local uint = {}
+        for n in code:gmatch("..") do
+            table.insert(uint, 1, string.char(tonumber(n, 16)))
+        end
+        return table.concat(uint)
     end
 
     this.update("正在打包...");
@@ -301,6 +300,7 @@ local function binapk(luapath, apkpath)
         elseif name:find("^assets/") then
         elseif name:find("^lua/") then
         elseif name:find("META%-INF") then
+        elseif !name:find("%a") then
         else
             local entry = ZipEntry(name)
             out.putNextEntry(entry)
@@ -314,10 +314,17 @@ local function binapk(luapath, apkpath)
                     [activity.getPackageName()] = packagename,
                     [info.nonLocalizedLabel] = appname,
                     [ver] = appver,
-                    [".*\\\\.alp"] = path_pattern or "",
                     [".*\\\\.lua"] = "",
                     [".*\\\\.luac"] = "",
                 }
+                if path_pattern==nil or path_pattern=="" then
+                    req[".*\\\\.alp"] = ""
+                    req["application/alp"] = "application/1234567890"
+                  else
+                    path_pattern=path_pattern:match("%w+$") or path_pattern
+                    req[".*\\\\.alp"] = ".*\\\\."..path_pattern
+                    req["application/alp"] = "application/"..path_pattern
+                end
                 for n = 0, list.size() - 1 do
                     local v = list.get(n)
                     if req[v] then
@@ -325,7 +332,7 @@ local function binapk(luapath, apkpath)
                     elseif user_permission then
                         local p = v:match("%.permission%.([%w_]+)$")
                         if p and (not user_permission[p]) then
-                            list.set(n, "")
+                            list.set(n, "android.permission.UNKNOWN")
                         end
                     end
                 end
@@ -363,15 +370,15 @@ local function binapk(luapath, apkpath)
         os.remove(apkpath)
         Signer.sign(tmp, apkpath)
         os.remove(tmp)
-        import "android.net.*"
+        activity.installApk(apkpath)
+        --[[import "android.net.*"
         import "android.content.*"
         i = Intent(Intent.ACTION_VIEW);
         i.setDataAndType(activity.getUriForFile(File(apkpath)), "application/vnd.android.package-archive");
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.update("正在打开...");
-        activity.startActivityForResult(i, 0);
-        
+        activity.startActivityForResult(i, 0);]]
         return "打包成功:" .. apkpath
     else
         os.remove(tmp)

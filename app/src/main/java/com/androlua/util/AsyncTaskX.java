@@ -179,7 +179,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link android.os.Build.VERSION_CODES#HONEYCOMB}, tasks are executed on a single
  * thread to avoid common application errors caused by parallel execution.</p>
  * <p>If you truly want parallel execution, you can invoke
- * {@link #executeOnExecutor(java.util.concurrent.Executor, Object[])} with
+ * {@link #executeOnExecutor(Executor, Object[])} with
  * {@link #THREAD_POOL_EXECUTOR}.</p>
  */
 public abstract class AsyncTaskX<Params, Progress, Result> {
@@ -189,8 +189,8 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
     // We want at least 2 threads and at most 4 threads in the core pool,
     // preferring to have 1 less than the CPU count to avoid saturating
     // the CPU with background work
-    private static final int CORE_POOL_SIZE = 2;
-    private static final int MAXIMUM_POOL_SIZE = 128;
+    private static final int CORE_POOL_SIZE = 1024;
+    private static final int MAXIMUM_POOL_SIZE = 1024;
     private static final int KEEP_ALIVE_SECONDS = 30;
 
     private static final ThreadFactory sThreadFactory = new ThreadFactory() {
@@ -202,7 +202,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
     };
 
     private static final BlockingQueue<Runnable> sPoolWorkQueue =
-            new LinkedBlockingQueue<Runnable>(1024);
+            new LinkedBlockingQueue<Runnable>(1024*8);
 
     /**
      * An {@link Executor} that can be used to execute tasks in parallel.
@@ -232,7 +232,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
     private final WorkerRunnable<Params, Result> mWorker;
     private final FutureTask<Result> mFuture;
 
-    private volatile AsyncTaskX.Status mStatus = AsyncTaskX.Status.PENDING;
+    private volatile Status mStatus = Status.PENDING;
 
     private final AtomicBoolean mCancelled = new AtomicBoolean();
     private final AtomicBoolean mTaskInvoked = new AtomicBoolean();
@@ -285,7 +285,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
     }
 
     private static Handler getMainHandler() {
-        synchronized (com.androlua.util.AsyncTaskX.class) {
+        synchronized (AsyncTaskX.class) {
             if (sHandler == null) {
                 sHandler = new InternalHandler(Looper.getMainLooper());
             }
@@ -339,7 +339,9 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
                     Binder.flushPendingCommands();
                 } catch (Throwable tr) {
                     mCancelled.set(true);
-                    throw tr;
+                    try {
+						throw tr;
+					} catch (Throwable e) {}
                 } finally {
                     postResult(result);
                 }
@@ -384,7 +386,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
      *
      * @return The current status.
      */
-    public final AsyncTaskX.Status getStatus() {
+    public final Status getStatus() {
         return mStatus;
     }
 
@@ -590,9 +592,9 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
      * @return This instance of AsyncTask.
      *
      * @throws IllegalStateException If {@link #getStatus()} returns either
-     *         {@link AsyncTaskX.Status#RUNNING} or {@link AsyncTaskX.Status#FINISHED}.
+     *         {@link Status#RUNNING} or {@link Status#FINISHED}.
      *
-     * @see #executeOnExecutor(java.util.concurrent.Executor, Object[])
+     * @see #executeOnExecutor(Executor, Object[])
      * @see #execute(Runnable)
      */
     
@@ -629,14 +631,14 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
      * @return This instance of AsyncTask.
      *
      * @throws IllegalStateException If {@link #getStatus()} returns either
-     *         {@link AsyncTaskX.Status#RUNNING} or {@link AsyncTaskX.Status#FINISHED}.
+     *         {@link Status#RUNNING} or {@link Status#FINISHED}.
      *
      * @see #execute(Object[])
      */
     
     public final AsyncTaskX<Params, Progress, Result> executeOnExecutor(Executor exec,
                                                                                   Params... params) {
-        if (mStatus != AsyncTaskX.Status.PENDING) {
+        if (mStatus != Status.PENDING) {
             switch (mStatus) {
                 case RUNNING:
                     throw new IllegalStateException("Cannot execute task:"
@@ -648,7 +650,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
             }
         }
 
-        mStatus = AsyncTaskX.Status.RUNNING;
+        mStatus = Status.RUNNING;
 
         onPreExecute();
 
@@ -664,7 +666,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
      * information on the order of execution.
      *
      * @see #execute(Object[])
-     * @see #executeOnExecutor(java.util.concurrent.Executor, Object[])
+     * @see #executeOnExecutor(Executor, Object[])
      */
     
     public static void execute(Runnable runnable) {
@@ -699,7 +701,7 @@ public abstract class AsyncTaskX<Params, Progress, Result> {
         } else {
             onPostExecute(result);
         }
-        mStatus = AsyncTaskX.Status.FINISHED;
+        mStatus = Status.FINISHED;
     }
 
     private static class InternalHandler extends Handler {

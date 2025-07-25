@@ -1,29 +1,12 @@
 local require = require
+local luajava = luajava
+local type=type
 local table = require "table"
 local loaded = {}
 local imported = {}
 luajava.loaded = loaded
 luajava.imported = imported
 local _G = _G
-if _G then
-    _G.string.split = function(parent,match)
-        if #parent > 0 then
-            if not match then
-                match = ""
-            end
-            local String = luajava.bindClass("java.lang.String")
-            local _,s = pcall(String,parent)
-            if _ then
-                s = s.split(match,-1)
-                return luajava.astable(s)
-            end
-        end
-        return parent
-    end
-    if _ENV then
-        _ENV.string.split = _G.string.split
-    end
-end
 local insert = table.insert
 local new = luajava.new
 local bindClass = luajava.bindClass
@@ -222,7 +205,6 @@ local function env_import(env)
 
     import("loadlayout", _env)
     import("loadbitmap", _env)
-    import("loadvector", _env)
     import("loadmenu", _env)
     return _env
 end
@@ -380,6 +362,20 @@ function _M.printstack()
     -- print("_ENV="..dump(ups._ENV or lps._ENV))
 end
 
+
+if activity then
+
+    function _M.print(...)
+        local buf = {}
+        for n = 1, select("#", ...) do
+            table.insert(buf, tostring(select(n, ...)))
+        end
+        local msg = table.concat(buf, "\t\t")
+        activity.sendMsg(msg)
+    end
+end
+
+
 function _M.getids()
     return luajava.ids
 end
@@ -470,7 +466,7 @@ function _M.timer(f, d, p, ...)
     return luaTimer
 end
 
-local os_mt = {}
+--[[local os_mt = {}
 os_mt.__index = function(t, k)
     local _t = {}
     _t.__cmd = (rawget(t, "__cmd") or "") .. k .. " "
@@ -485,14 +481,8 @@ os_mt.__call = function(t, ...)
     return s
 end
 setmetatable(os, os_mt)
-
+]]
 env_import(_G)
-
-if not _G.print then
-    if _ENV then
-        _G.print = _ENV.print
-    end
-end
 
 local luajava_mt = {}
 luajava_mt.__index = function(t, k)

@@ -323,7 +323,7 @@ local function checkValues(...)
     for n = 1, #vars do
         vars[n] = checkValue(vars[n])
     end
-    return table.unpack(vars)
+    return unpack(vars)
 end
 
 local function getattr(s)
@@ -446,8 +446,6 @@ local function setattribute(root, view, params, k, v, ids)
                 end
                 if v:find("%.9%.png") then
                     setBackground(view, NineBitmapDrawable(loadbitmap(v)))
-                elseif v:find(".xml") then
-                    setBackground(view, loadvector(v))
                 else
                     setBackground(view, BitmapDrawable(loadbitmap(v)))
                 end
@@ -555,6 +553,11 @@ local function loadlayout(t, root, group,p)
     pcall(setMiniSize, view)
 
     if view.getBackground() == nil then
+        local gd=GradientDrawable()
+        gd.setColor(0x00ffffff)
+        gd.setStroke(2,0x44000000,5,5)
+        gd.setGradientRadius(700)
+        gd.setGradientType(1)
         setBackground(view, gd)
     end
 

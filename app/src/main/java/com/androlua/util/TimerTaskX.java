@@ -17,7 +17,13 @@
 
 package com.androlua.util;
 
-
+/**
+ * The {@code TimerTask} class represents a task to run at a specified time. The task
+ * may be run once or repeatedly.
+ *
+ * @see Timer
+ * @see Object#wait(long)
+ */
 public abstract class TimerTaskX implements Runnable {
     /* Lock object for synchronization. It's also used by Timer class. */
     final Object lock = new Object();

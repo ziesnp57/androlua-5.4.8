@@ -161,7 +161,7 @@ public class CardView extends FrameLayout implements CardViewDelegate {
      * Sets the padding between the Card's edges and the children of CardView.
      * <p>
      * Depending on platform version or {@link #getUseCompatPadding()} settings, CardView may
-     * update these values before calling {@link android.view.View#setPadding(int, int, int, int)}.
+     * update these values before calling {@link View#setPadding(int, int, int, int)}.
      *
      * @param left   The left padding in pixels
      * @param top    The top padding in pixels

@@ -2,7 +2,7 @@ package com.androlua;
 
 import com.androlua.util.AsyncTaskX;
 import com.luajava.JavaFunction;
-import com.luajava.LuaError;
+import com.luajava.LuaException;
 import com.luajava.LuaObject;
 import com.luajava.LuaState;
 import com.luajava.LuaStateFactory;
@@ -41,14 +41,14 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 
 	private LuaObject mUpdate;
 
-	public LuaAsyncTask(LuaContext luaContext, long delay, LuaObject callback) throws LuaError {
+	public LuaAsyncTask(LuaContext luaContext, long delay, LuaObject callback) throws LuaException {
 		luaContext.regGc(this);
 		mLuaContext = luaContext;
 		mDelay = delay;
 		mCallback = callback;
 	}
 
-	public LuaAsyncTask(LuaContext luaContext, String src, LuaObject callback) throws LuaError {
+	public LuaAsyncTask(LuaContext luaContext, String src, LuaObject callback) throws LuaException {
 		luaContext.regGc(this);
 		mLuaContext = luaContext;
 		mBuffer = src.getBytes();
@@ -56,7 +56,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 	}
 
 
-	public LuaAsyncTask(LuaContext luaContext, LuaObject func, LuaObject callback) throws LuaError {
+	public LuaAsyncTask(LuaContext luaContext, LuaObject func, LuaObject callback) throws LuaException {
 		luaContext.regGc(this);
 		mLuaContext = luaContext;
 		mBuffer = func.dump();
@@ -69,7 +69,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 		}
 	}
 
-	public LuaAsyncTask(LuaContext luaContext, LuaObject func, LuaObject update, LuaObject callback) throws LuaError {
+	public LuaAsyncTask(LuaContext luaContext, LuaObject func, LuaObject update, LuaObject callback) throws LuaException {
 		luaContext.regGc(this);
 		mLuaContext = luaContext;
 		mBuffer = func.dump();
@@ -77,7 +77,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 		mCallback = callback;
 	}
 
-	public void execute() throws IllegalArgumentException, ArrayIndexOutOfBoundsException, LuaError {
+	public void execute() throws IllegalArgumentException, ArrayIndexOutOfBoundsException, LuaException {
 		// TODO: Implement this method
 		super.execute();
 	}
@@ -128,7 +128,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 			JavaFunction update = new JavaFunction(L){
 
 				@Override
-				public int execute() throws LuaError {
+				public int execute() throws LuaException {
 					// TODO: Implement this method
 					update(L.toJavaObject(2));
 					return 0;
@@ -145,7 +145,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 			L.setField(-2, "cpath");
 			L.pop(1); 
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError("AsyncTask", e);
 		}
 		
@@ -157,8 +157,8 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 				for(Object s:loadeds)
 					_import.call(s.toString());
 			}
-			catch (LuaError e) {
-				
+			catch (LuaException e) {
+			//	e.printStackTrace();
 			}
 		}
 
@@ -184,9 +184,9 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 					return ret;
 				}
 			}
-			throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+			throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 		} 
-		catch (LuaError e) {
+		catch (Exception e) {
 			mLuaContext.sendError("doInBackground", e);
 		}
 
@@ -204,7 +204,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 			if (mCallback != null)
 				mCallback.call((Object[])result);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError("onPostExecute", e);
 		}
 		if(L!=null)
@@ -220,7 +220,7 @@ public class LuaAsyncTask extends AsyncTaskX implements LuaGcable {
 			if (mUpdate != null)
 				mUpdate.call(values);
 		}
-		catch (LuaError e) {
+		catch (LuaException e) {
 			mLuaContext.sendError("onProgressUpdate", e);
 		}
 		super.onProgressUpdate(values);

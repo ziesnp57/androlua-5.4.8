@@ -95,7 +95,16 @@ public final class MultiDex {
 	{
 		installSecondaryDexes(loader,dexDir,files);
 	}
-
+    /**
+     * Patches the application context class loader by appending extra dex files
+     * loaded from the application apk. This method should be called in the
+     * attachBaseContext of your {@link Application}, see
+     * {@link MultiDexApplication} for more explanation and an example.
+     *
+     * @param context application context.
+     * @throws RuntimeException if an error occurred preventing the classloader
+     *         extension.
+     */
     public static void install(Context context) {
         Log.i(TAG, "install");
         if (IS_VM_MULTIDEX_CAPABLE) {

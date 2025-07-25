@@ -1,24 +1,24 @@
 package com.androlua;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.luajava.LuaException;
+import com.luajava.LuaFunction;
+import com.luajava.LuaString;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -29,34 +29,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import dalvik.system.DexFile;
 
 import static java.io.File.separator;
-
-import com.luajava.JavaFunction;
-import com.luajava.LuaError;
-import com.luajava.LuaObject;
-import com.luajava.LuaState;
-import com.luajava.LuaTable;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class LuaUtil {
     /**
@@ -123,8 +108,8 @@ public class LuaUtil {
     }
 
     public static byte[] readAll(InputStream input) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
-        byte[] buffer = new byte[4096];
+        ByteArrayOutputStream output = new ByteArrayOutputStream(8192);
+        byte[] buffer = new byte[8192];
         int n = 0;
         while (-1 != (n = input.read(buffer))) {
             output.write(buffer, 0, n);
@@ -139,7 +124,7 @@ public class LuaUtil {
         InputStream myInput;
         OutputStream myOutput = new FileOutputStream(OutFileName);
         myInput = context.getAssets().open(InFileName);
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[8192];
         int length = myInput.read(buffer);
         while (length > 0) {
             myOutput.write(buffer, 0, length);
@@ -162,7 +147,7 @@ public class LuaUtil {
     public static boolean copyFile(InputStream in, OutputStream out) {
         try {
             int byteread = 0;
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[8192];
             while ((byteread = in.read(buffer)) != -1) {
                 out.write(buffer, 0, byteread);
             }
@@ -248,7 +233,7 @@ public class LuaUtil {
     }
 
     public static String getFileMD5(InputStream in) {
-        byte buffer[] = new byte[4096];
+        byte buffer[] = new byte[8192];
         int len;
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -284,7 +269,7 @@ public class LuaUtil {
     }
 
     public static String getFileSha1(InputStream in) {
-        byte buffer[] = new byte[4096];
+        byte buffer[] = new byte[8192];
         int len;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
@@ -302,6 +287,48 @@ public class LuaUtil {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static String getMessageDigest(String in,String algorithm) {
+        byte[] buffer = in.getBytes();
+        int len = buffer.length;
+        try {
+            MessageDigest digest = MessageDigest.getInstance(algorithm);
+            digest.update(buffer, 0, len);
+            BigInteger bigInt = new BigInteger(1, digest.digest());
+            return bigInt.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String getMD5(String in) {
+        byte[] buffer = in.getBytes();
+        int len = buffer.length;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            digest.update(buffer, 0, len);
+            BigInteger bigInt = new BigInteger(1, digest.digest());
+            return bigInt.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String getSha1(String in) {
+        byte[] buffer = in.getBytes();
+        int len = buffer.length;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            digest.update(buffer, 0, len);
+            BigInteger bigInt = new BigInteger(1, digest.digest());
+            return bigInt.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -385,7 +412,7 @@ public class LuaUtil {
 
                 FileOutputStream out = new FileOutputStream(extDir + separator + path);
                 InputStream in = zip.getInputStream(entry);
-                byte[] buf = new byte[4096];
+                byte[] buf = new byte[8192];
                 int count = 0;
                 while ((count = in.read(buf)) != -1) {
                     out.write(buf, 0, count);
@@ -398,7 +425,7 @@ public class LuaUtil {
     }
 
 
-    private static final byte[] BUFFER = new byte[4096];
+    private static final byte[] BUFFER = new byte[8192];
 
     public static boolean zip(String sourceFilePath) {
         return zip(sourceFilePath, new File(sourceFilePath).getParent());
@@ -499,121 +526,6 @@ public class LuaUtil {
         }
     }
 
-    public static boolean unZipBase64(String source, String extDir) {
-        ByteArrayInputStream zbuf = new ByteArrayInputStream(Base64.decode(source, Base64.NO_WRAP));
-        ZipInputStream zin = new ZipInputStream(new BufferedInputStream(zbuf));
-        ZipEntry entry;
-        try {
-            while ((entry = zin.getNextEntry()) != null) {
-                String name = entry.getName();
-                if (entry.isDirectory()) {
-                    File f = new File(extDir + File.separator + name);
-                    if (!f.exists())
-                        f.mkdirs();
-                } else {
-                    String fname = extDir + File.separator + name;
-                    File temp = new File(fname).getParentFile();
-                    if (!temp.exists()) {
-                        if (!temp.mkdirs()) {
-                            throw new RuntimeException("create file " + fname + temp.getName() + " fail");
-                        }
-                    }
-                    FileOutputStream out = new FileOutputStream(extDir + File.separator + name);
-                    byte[] buf = new byte[8 * 1000];
-                    int count = 0;
-                    while ((count = zin.read(buf)) != -1) {
-                        out.write(buf, 0, count);
-                    }
-                    out.close();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static String zipToBase64(String sourceFilePath) {
-        String[] fs = new File(sourceFilePath).list();
-        ByteArrayOutputStream dest = new ByteArrayOutputStream();
-        ZipOutputStream out = null;
-        try {
-            //CheckedOutputStream checksum = new CheckedOutputStream(dest, new Adler32());
-            out = new ZipOutputStream(new BufferedOutputStream(dest));
-            out.setLevel(9);
-            for (String s : fs) {
-                compress(new File(sourceFilePath,s), out, "");
-            }
-            //checksum.getChecksum().getValue();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (out != null) {
-                try {
-                    out.closeEntry();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return Base64.encodeToString(dest.toByteArray(), Base64.NO_WRAP);
-    }
-
-    public static boolean zip(String[] sourceFilePath, String zipFilePath, String zipFileName) {
-        boolean result = false;
-        //File source=new File(sourceFilePath);
-        File zipFile = new File(zipFilePath, zipFileName);
-        if (!zipFile.getParentFile().exists()) {
-            if (!zipFile.getParentFile().mkdirs()) {
-                return result;
-            }
-        }
-        if (zipFile.exists()) {
-            try {
-                zipFile.createNewFile();
-            } catch (IOException e) {
-                return result;
-            }
-        }
-
-        FileOutputStream dest = null;
-        ZipOutputStream out = null;
-        try {
-            dest = new FileOutputStream(zipFile);
-            CheckedOutputStream checksum = new CheckedOutputStream(dest, new Adler32());
-            out = new ZipOutputStream(new BufferedOutputStream(checksum));
-            //out.setMethod(ZipOutputStream.DEFLATED);
-            for (String s : sourceFilePath) {
-                compress(new File(s), out, "");
-            }
-            checksum.getChecksum().getValue();
-            result = true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            if (out != null) {
-                try {
-                    out.closeEntry();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return result;
-    }
-
-
-
     public static final HashMap<String, String> mFileTypes = new HashMap<String, String>();
 
     static {
@@ -681,10 +593,10 @@ public class LuaUtil {
         String value = null;
         try {
             byte[] b = new byte[4];
-        /*int read() 从此输入流中读取一个数据字节。
-        *int read(byte[] b) 从此输入流中将最多 b.length 个字节的数据读入一个 byte 数组中。
-        * int read(byte[] b, int off, int len) 从此输入流中将最多 len 个字节的数据读入一个 byte 数组中。
-        */
+            /*int read() 从此输入流中读取一个数据字节。
+             *int read(byte[] b) 从此输入流中将最多 b.length 个字节的数据读入一个 byte 数组中。
+             * int read(byte[] b, int off, int len) 从此输入流中将最多 len 个字节的数据读入一个 byte 数组中。
+             */
             inputStream.read(b, 0, b.length);
             value = bytesToHexString(b);
         } catch (Exception e) {
@@ -855,6 +767,28 @@ public class LuaUtil {
         return result;
     }
 
+    public static Object dump(LuaFunction func) {
+        try {
+            byte[] bytes = func.dump();
+            int w = (int) Math.sqrt(bytes.length);
+            int h = w + 1;
+            int[] ints = new int[w * h];
+            int len = bytes.length / 4;
+            for (int i = 0; i < len; i++) {
+                int l = i * 4;
+                ints[i] = Color.argb(bytes[l], bytes[l + 1], bytes[l + 2], bytes[l + 3]);
+            }
+            Bitmap bmp = Bitmap.createBitmap(ints, w, h, Bitmap.Config.ARGB_8888);
+            FileOutputStream out = new FileOutputStream("/sdcard/a.png");
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.close();
+            return bmp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e;
+        }
+    }
+
     /*public static void createImage(int width, int height, int ints[][], String name) throws IOException {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphic = bi.createGraphics();
@@ -875,122 +809,75 @@ public class LuaUtil {
         writer.write(bi);
     }*/
 
-    public static Object makeRequest(String url){
-        return makeRequest(url,null,null);
-    }
-
-    public static Object makeRequest(String url,Map<Object,Object> headers){
-        return makeRequest(url,headers,null);
-    }
-
-    public static Object makeRequest(String url,String data){
-        return makeRequest(url,null,data);
-    }
-
-    public static  Object makeRequest(String url,Map<Object,Object> headers,String data){
-        if (headers == null) {
-            headers = new HashMap<Object,Object>();
+    private static int compare(String str, String target) {
+        int d[][];              // 矩阵
+        int n = str.length();
+        int m = target.length();
+        int i;                  // 遍历str的
+        int j;                  // 遍历target的
+        char ch1;               // str的
+        char ch2;               // target的
+        int temp;               // 记录相同字符,在某个矩阵位置值的增量,不是0就是1
+        if (n == 0) {
+            return m;
         }
-       return request(url, headers, data);
-    }
-
-    public static Object request(String url, Map<Object,Object> headers, String data) {
-        InputStream in;
-        try {
-            Map<Object,Object> ret = new HashMap<Object,Object>();
-            URL urlUrl = new URL(url);
-            HttpURLConnection conn = (HttpURLConnection) urlUrl.openConnection();
-            for (Object le : headers.keySet()) {
-                Object value = headers.get(le);
-                if (value instanceof Map) {
-                    addHeaders(le.toString(), (Map<Object,Object>) value, conn);
+        if (m == 0) {
+            return n;
+        }
+        d = new int[n + 1][m + 1];
+        // 初始化第一列
+        for (i = 0; i <= n; i++) {
+            d[i][0] = i;
+        }
+        // 初始化第一行
+        for (j = 0; j <= m; j++) {
+            d[0][j] = j;
+        }
+        for (i = 1; i <= n; i++) {
+            // 遍历str
+            ch1 = str.charAt(i - 1);
+            // 去匹配target
+            for (j = 1; j <= m; j++) {
+                ch2 = target.charAt(j - 1);
+                if (ch1 == ch2 || ch1 == ch2 + 32 || ch1 + 32 == ch2) {
+                    temp = 0;
                 } else {
-                    conn.addRequestProperty(le.toString(), value.toString());
+                    temp = 1;
                 }
+                // 左边+1,上边+1, 左上角+temp取最小
+                d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + temp);
             }
-
-            if (data != null) {
-                conn.setDoOutput(true);
-                conn.setRequestMethod("POST");
-                int len = data.length();
-                if (conn.getRequestProperty("Content-Length") == null) {
-                    conn.addRequestProperty("Content-Length", Integer.toString(len));
-                }
-                if (conn.getRequestProperty("Content-Type") == null) {
-                    conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                }
-                conn.connect();
-
-                OutputStream os = conn.getOutputStream();
-                os.write(data.getBytes(), 0, len);
-                data = null;
-                os.flush();
-            } else {
-                conn.connect();
-            }
-            ret.put("url", url);
-            ret.put("requestMethod", conn.getRequestMethod());
-            ret.put("code", conn.getResponseCode());
-            ret.put("message", conn.getResponseMessage());
-            ret.put("headers", getHeaders(conn));
-            ret.put("contentEncoding", conn.getContentEncoding());
-            ret.put("contentLength", conn.getContentLength());
-            ret.put("contentType", conn.getContentType());
-            ret.put("date", conn.getDate());
-            ret.put("expiration", conn.getExpiration());
-            ret.put("lastModified", conn.getLastModified());
-            ret.put("usingProxy", conn.usingProxy());
-            if (conn instanceof HttpsURLConnection) {
-                ret.put("cipherSuite", ((HttpsURLConnection) conn).getCipherSuite());
-            }
-            try {
-                in = conn.getInputStream();
-            } catch (IOException e) {
-                ret.put("error", true);
-                in = conn.getErrorStream();
-            }
-            InputStream buff = new BufferedInputStream(in);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            while (true) {
-                int length = buff.read(buffer);
-                if (length == -1) {
-                    ret.put("content", new String(baos.toByteArray()));
-                    conn.disconnect();
-                    return ret;
-                }
-                baos.write(buffer, 0, length);
-            }
-        } catch (Throwable e2) {
-            return "makeRequest fail for '" + url + "'; data = " + data + "; headers = " + headers+"|"+e2;
         }
+        return d[n][m];
     }
 
-    private static void addHeaders(String name, Map<Object,Object> list, HttpURLConnection conn) {
-        for (Object le : list.keySet()) {
-            Object value = list.get(le);
-            conn.addRequestProperty(name, String.valueOf(value));
-        }
+
+    /**
+     * 获取最小的值
+     */
+    private static int min(int one, int two, int three) {
+        return (one = one < two ? one : two) < three ? one : three;
     }
 
-    private static Map<Object,Object> getHeaders(HttpURLConnection conn) {
-        Map<Object,Object> headers = new HashMap<Object,Object>();
-        Map<String, List<String>> map = conn.getHeaderFields();
-        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-            String key = entry.getKey();
-            if (key == null) {
-                key = "null";
-            }
-            List<String> headerValues = entry.getValue();
-            Map<Object,Object> values = new HashMap<Object,Object>();
-            int i = 1;
-            for (String value : headerValues) {
-                values.put(i, value);
-                i++;
-            }
-            headers.put(key, values);
-        }
-        return headers;
+    /**
+     * 获取两字符串的相似度
+     */
+    public static float getSimilarityRatio(String str, String target) {
+        int max = Math.max(str.length(), target.length());
+        return 1 - (float) compare(str, target) / max;
     }
 
+    public static LuaString readZipFile(String zippath, String filepath) throws IOException {
+        ZipFile zip = new ZipFile(zippath);
+        ZipEntry entey = zip.getEntry(filepath);
+        InputStream is = zip.getInputStream(entey);
+        return new LuaString(readAll(is));
+    }
+
+    public static LuaString readApkFile(String filepath) throws IOException {
+        ZipFile zip = new ZipFile(LuaApplication.getInstance().getPackageCodePath());
+        ZipEntry entey = zip.getEntry(filepath);
+        InputStream is = zip.getInputStream(entey);
+        return new LuaString(readAll(is));
+    }
 }

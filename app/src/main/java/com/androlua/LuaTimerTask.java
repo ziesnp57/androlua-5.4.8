@@ -19,12 +19,12 @@ public class LuaTimerTask extends TimerTaskX
 
 	private byte[] mBuffer;
 
-	public LuaTimerTask(LuaContext luaContext, String src) throws LuaError
+	public LuaTimerTask(LuaContext luaContext, String src) throws LuaException
 	{
 		this(luaContext, src, null);
 	}
 
-	public LuaTimerTask(LuaContext luaContext, String src, Object[] arg) throws LuaError
+	public LuaTimerTask(LuaContext luaContext, String src, Object[] arg) throws LuaException
 	{
 		mLuaContext =luaContext;
 		mSrc = src;
@@ -32,12 +32,12 @@ public class LuaTimerTask extends TimerTaskX
 			mArg = arg;
 	}
 
-	public LuaTimerTask(LuaContext luaContext, LuaObject func) throws LuaError
+	public LuaTimerTask(LuaContext luaContext, LuaObject func) throws LuaException
 	{
 		this(luaContext, func, null);
 	}
 
-	public LuaTimerTask(LuaContext luaContext, LuaObject func, Object[] arg) throws LuaError
+	public LuaTimerTask(LuaContext luaContext, LuaObject func, Object[] arg) throws LuaException
 	{
 
 		mLuaContext = luaContext;
@@ -78,7 +78,7 @@ public class LuaTimerTask extends TimerTaskX
 				}
 			}
 		}
-		catch (LuaError e)
+		catch (LuaException e)
 		{
 			mLuaContext.sendError(this.toString(), e);
 		}
@@ -99,7 +99,7 @@ public class LuaTimerTask extends TimerTaskX
 		mArg=arg;
 	}
 	
-	public void setArg(LuaObject arg) throws ArrayIndexOutOfBoundsException, LuaError, IllegalArgumentException
+	public void setArg(LuaObject arg) throws ArrayIndexOutOfBoundsException, LuaException, IllegalArgumentException
 	{
 		mArg=arg.asArray();
 	}
@@ -115,13 +115,13 @@ public class LuaTimerTask extends TimerTaskX
 	}
 
 
-	public void set(String key, Object value) throws LuaError
+	public void set(String key, Object value) throws LuaException
 	{
 		L.pushObjectValue(value);
 		L.setGlobal(key);
 	}
 
-	public Object get(String key) throws LuaError
+	public Object get(String key) throws LuaException
 	{
 		L.getGlobal(key);
 		return L.toJavaObject(-1);
@@ -147,7 +147,7 @@ public class LuaTimerTask extends TimerTaskX
 		return "Unknown error " + error;
 	}
 	
-	private void initLua() throws LuaError
+	private void initLua() throws LuaException
 	{
 		L = LuaStateFactory.newLuaState();
 		L.openLibs();
@@ -178,7 +178,7 @@ public class LuaTimerTask extends TimerTaskX
 
 		JavaFunction set = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError
+			public int execute() throws LuaException
 			{
 
 				mLuaContext.set(L.toString(2), L.toJavaObject(3));
@@ -189,7 +189,7 @@ public class LuaTimerTask extends TimerTaskX
 
 		JavaFunction call = new JavaFunction(L) {
 			@Override
-			public int execute() throws LuaError
+			public int execute() throws LuaException
 			{
 
 				int top=L.getTop();
@@ -246,7 +246,7 @@ public class LuaTimerTask extends TimerTaskX
 
 	}
 	
-	private void newLuaThread(byte[] buf, Object...args) throws LuaError 
+	private void newLuaThread(byte[] buf, Object...args) throws LuaException 
 	{
 		int ok = 0;
 		L.setTop(0);
@@ -269,10 +269,10 @@ public class LuaTimerTask extends TimerTaskX
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
-	private void doFile(String filePath, Object...args) throws LuaError 
+	private void doFile(String filePath, Object...args) throws LuaException 
 	{
 		int ok = 0;
 		L.setTop(0);
@@ -295,10 +295,10 @@ public class LuaTimerTask extends TimerTaskX
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
-	public void doAsset(String name, Object...args) throws LuaError, IOException 
+	public void doAsset(String name, Object...args) throws LuaException, IOException 
 	{
 		int ok = 0;
 		byte[] bytes = LuaUtil.readAsset(mLuaContext.getContext(),name);
@@ -322,10 +322,10 @@ public class LuaTimerTask extends TimerTaskX
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
-	private void doString(String src, Object...args) throws LuaError
+	private void doString(String src, Object...args) throws LuaException
 	{			
 		L.setTop(0);
 		int ok = L.LloadString(src);
@@ -348,7 +348,7 @@ public class LuaTimerTask extends TimerTaskX
 				return;
 			}
 		}
-		throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+		throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 	}
 
 
@@ -376,10 +376,10 @@ public class LuaTimerTask extends TimerTaskX
 				{				
 					return ;
 				}
-				throw new LuaError(errorReason(ok) + ": " + L.toString(-1));
+				throw new LuaException(errorReason(ok) + ": " + L.toString(-1));
 			}
 		}
-		catch (LuaError e)
+		catch (LuaException e)
 		{
 			mLuaContext.sendError(this.toString()+" "+funcName, e);
 		}
@@ -393,7 +393,7 @@ public class LuaTimerTask extends TimerTaskX
 			L.pushObjectValue(value);
 			L.setGlobal(key);
 		}
-		catch (LuaError e)
+		catch (LuaException e)
 		{
 			mLuaContext.sendError(this.toString(), e);
 		}

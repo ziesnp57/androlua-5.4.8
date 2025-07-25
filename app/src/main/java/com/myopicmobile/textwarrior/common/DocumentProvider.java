@@ -8,6 +8,9 @@
  */
 package com.myopicmobile.textwarrior.common;
 
+import android.graphics.Rect;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +25,7 @@ import java.util.List;
  * changes made by one DocumentProvider will not cause other DocumentProviders
  * to be notified. Implement a publish/subscribe interface if required.
  */
-public class DocumentProvider implements java.lang.CharSequence
+public class DocumentProvider implements CharSequence
 {
 
 	@Override
@@ -318,6 +321,12 @@ public class DocumentProvider implements java.lang.CharSequence
 		// TODO: Implement this method
 		return _theText.toString();
 	}
-	
-	
+
+
+	public void setLines(ArrayList<Rect> lines) {
+		_theText.setLines(lines);
+	}
+	public ArrayList<Rect> getLines() {
+		return _theText.getLines();
+	}
 }
