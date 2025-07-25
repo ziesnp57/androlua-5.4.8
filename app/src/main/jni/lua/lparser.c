@@ -63,7 +63,7 @@ typedef struct BlockCnt {
 */
 static void statement (LexState *ls);
 static void expr (LexState *ls, expdesc *v);
-
+static void retstat (LexState *ls);
 
 static l_noret error_expected (LexState *ls, int token) {
   luaX_syntaxerror(ls,
@@ -1041,6 +1041,67 @@ static void body (LexState *ls, expdesc *e, int ismethod, int line) {
 }
 
 
+static void lambda_parlist(LexState *ls) {
+    /* lambda_parlist -> '(' [ param { ',' param } ] ')' */
+    /* lambda_parlist -> [ param { ',' param } ] */
+    if (testnext(ls, '(')) {
+        parlist(ls);
+        checknext(ls, ')');
+        return;
+    }
+    FuncState *fs = ls->fs;
+    Proto *f = fs->f;
+    int nparams = 0;
+    f->is_vararg = 0;
+    if (ls->t.token == TK_NAME || ls->t.token == TK_DOTS) {
+        do {
+            switch (ls->t.token) {
+                case TK_NAME: {  /* param -> NAME */
+                    new_localvar(ls, str_checkname(ls));
+                    nparams++;
+                    break;
+                }
+                case TK_DOTS: {  /* param -> '...' */
+                    luaX_next(ls);
+                    f->is_vararg = 1;
+                    break;
+                }
+                default: luaX_syntaxerror(ls, "<name> or '...' expected");
+            }
+        } while (!f->is_vararg && testnext(ls, ','));
+    }
+    adjustlocalvars(ls, nparams);
+    f->numparams = cast_byte(fs->nactvar);
+    luaK_reserveregs(fs, fs->nactvar);  /* reserve register for parameters */
+}
+
+
+static void lambda_body(LexState *ls, expdesc *e, int line) {
+    /* lambda_body -> lambda_parlist -> explist */
+    /* lambda_body -> lambda_parlist [ '=>' ] stat */
+    FuncState new_fs;
+    BlockCnt bl;
+    new_fs.f = addprototype(ls);
+    new_fs.f->linedefined = line;
+    open_func(ls, &new_fs, &bl);
+    lambda_parlist(ls);
+    if (testnext(ls, TK_LET)||testnext(ls, ':')) {
+        enterlevel(ls);
+        retstat(ls);
+        lua_assert(ls->fs->f->maxstacksize >= ls->fs->freereg &&
+                   ls->fs->freereg >= ls->fs->nactvar);
+        ls->fs->freereg = ls->fs->nactvar;  /* free registers */
+        leavelevel(ls);
+    } else {
+        testnext(ls, TK_MEAN);
+        statement(ls);
+    }
+    new_fs.f->lastlinedefined = ls->linenumber;
+    codeclosure(ls, e);
+    close_func(ls);
+}
+
+
 static int explist (LexState *ls, expdesc *v) {
   /* explist -> expr { ',' expr } */
   int n = 1;  /* at least one expression */
@@ -1219,6 +1280,11 @@ static void simpleexp (LexState *ls, expdesc *v) {
       body(ls, v, 0, ls->linenumber);
       return;
     }
+    case TK_LAMBDA: {
+      luaX_next(ls);
+      lambda_body(ls, v, ls->linenumber);
+      return;
+    }    
     default: {
       suffixedexp(ls, v);
       return;
@@ -1650,7 +1716,7 @@ static void forlist (LexState *ls, TString *indexname) {
     new_localvar(ls, str_checkname(ls));
     nvars++;
   }
-  checknext(ls, TK_IN);
+  if (ls->t.token == TK_IN) luaX_next(ls);
   line = ls->linenumber;
   adjust_assign(ls, 4, explist(ls, &e), &e);
   adjustlocalvars(ls, 4);  /* control variables */
