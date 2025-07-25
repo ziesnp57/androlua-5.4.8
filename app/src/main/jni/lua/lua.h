@@ -423,9 +423,17 @@ LUA_API void (lua_closeslot) (lua_State *L, int idx);
 #define lua_newuserdata(L,s)	lua_newuserdatauv(L,s,1)
 #define lua_getuservalue(L,idx)	lua_getiuservalue(L,idx,1)
 #define lua_setuservalue(L,idx)	lua_setiuservalue(L,idx,1)
-
-
-LUA_API void  (lua_const) (lua_State *L, int idx);
+#define lua_objlen(L, idx)      lua_rawlen(L, idx)
+#define lua_strlen(L, idx)      lua_rawlen(L, idx)
+#define lua_lessthan(L, idx1, idx2) \
+    (lua_compare(L, (idx1), (idx2), LUA_OPLT))
+#define lua_equal(L, idx1, idx2) \
+    (lua_compare(L, (idx1), (idx2), LUA_OPEQ))
+#define lua_lessequal(L, idx1, idx2) \
+    (lua_compare(L, (idx1), (idx2), LUA_OPLE))
+#define luaL_typerror(L, narg, tname) \
+    (luaL_argerror((L), (narg), lua_pushfstring((L), "%s expected, got %s", \
+                                                (tname), luaL_typename((L), (narg)))))
 
 #define LUA_NUMTAGS		LUA_NUMTYPES
 

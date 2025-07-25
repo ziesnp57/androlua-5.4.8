@@ -1733,8 +1733,74 @@ static void ifstat (LexState *ls, int line) {
   luaK_patchtohere(fs, escapelist);  /* patch escape list to 'if' end */
 }
 
-//================================================ SWITCH ========================================================
 
+static void single_test_then_block (LexState *ls, int *escapelist) {
+    /* test_then_block -> [IF | ELSEIF] cond THEN block */
+    BlockCnt bl;
+    int line;
+    FuncState *fs = ls->fs;
+    TString *jlb = NULL;
+    int target = NO_JUMP;
+    expdesc v;
+    int jf;  /* instruction to skip 'then' code (if condition is false) */
+    luaX_next(ls);  /* skip IF or ELSEIF */
+    expr(ls, &v);  /* read condition */
+    line = ls->linenumber;
+    if (ls->t.token == TK_GOTO || ls->t.token == TK_BREAK || ls->t.token == TK_CONTINUE) {
+        luaK_goiffalse(ls->fs, &v);  /* will jump to label if condition is true */
+        enterblock(fs, &bl, 0);  /* must enter block before 'goto' */
+        gotostat(ls);  /* handle goto/break */
+        leaveblock(fs);
+        return;
+    }
+    else {  /* regular case (not a jump) */
+        luaK_goiftrue(ls->fs, &v);  /* skip over block if condition is false */
+        enterblock(fs, &bl, 0);
+        jf = v.f;
+    }
+    statement(ls);
+    leaveblock(fs);
+    if (ls->t.token == TK_ELSE || ls->t.token == TK_CASE ||
+        ls->t.token == TK_WHEN)  /* followed by 'else'/'elseif'? */
+        luaK_concat(fs, escapelist, luaK_jump(fs));  /* must jump over it */
+    luaK_patchtohere(fs, jf);
+}
+
+static void single_block (LexState *ls) {
+    /* block -> statlist */
+    FuncState *fs = ls->fs;
+    BlockCnt bl;
+    enterblock(fs, &bl, 0);
+    statement(ls);
+    leaveblock(fs);
+}
+
+
+static void single_ifstat (LexState *ls, int line) {
+    /* ifstat -> IF cond THEN block {ELSEIF cond THEN block} [ELSE block] END */
+    FuncState *fs = ls->fs;
+    int escapelist = NO_JUMP;  /* exit list for finished parts */
+    single_test_then_block(ls, &escapelist);  /* IF cond THEN block */
+    if (testnext(ls,'`'))
+        single_block(ls);  /* 'else' part */
+    luaK_patchtohere(fs, escapelist);  /* patch escape list to 'if' end */
+}
+
+
+static void whenstat (LexState *ls, int line) {
+    /* ifstat -> IF cond THEN block {ELSEIF cond THEN block} [ELSE block] END */
+    FuncState *fs = ls->fs;
+    int escapelist = NO_JUMP;  /* exit list for finished parts */
+    single_test_then_block(ls, &escapelist);  /* IF cond THEN block */
+    while (ls->t.token == TK_CASE)
+        single_test_then_block(ls, &escapelist);  /* IF cond THEN block */
+    if (testnext(ls, TK_ELSE))
+        single_block(ls);  /* 'else' part */
+    luaK_patchtohere(fs, escapelist);  /* patch escape list to 'if' end */
+}
+
+
+//================================================ SWITCH ========================================================
 static expdesc clone(expdesc e2){
   expdesc e1;
   e1.f=e2.f;
@@ -2014,6 +2080,10 @@ static void statement (LexState *ls) {
   switch (ls->t.token) {
     case ';': {  /* stat -> ';' (empty statement) */
       luaX_next(ls);  /* skip ';' */
+      break;
+    }
+    case TK_WHEN: {  /* stat -> ifstat */
+      whenstat(ls, line);
       break;
     }
     case TK_IF: {  /* stat -> ifstat */
