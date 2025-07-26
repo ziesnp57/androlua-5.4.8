@@ -10,11 +10,10 @@ LOCAL_CFLAGS := -std=c17 -O3 -flto \
 LOCAL_CFLAGS += -g0 -DNDEBUG
 
 # 极致性能构建配置
-LOCAL_CFLAGS += -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables
+LOCAL_CFLAGS += -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -Wimplicit-function-declaration
 
 # 链接选项
 LOCAL_LDFLAGS := -flto -fuse-linker-plugin -Wl,--gc-sections
-
 
 LOCAL_SRC_FILES := \
 	lapi.c \
