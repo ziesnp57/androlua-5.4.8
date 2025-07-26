@@ -76,6 +76,13 @@
 #endif
 
 
+//mod by nirenr
+#ifdef __ANDROID__
+#define LUA_USE_POSIX
+#define LUA_USE_DLOPEN		/* needs an extra library: -ldl */
+//#define LUA_USE_READLINE	/* needs some extra libraries */
+#endif
+
 /*
 @@ LUAI_IS32INT is true iff 'int' has (at least) 32 bits.
 */
