@@ -10,7 +10,6 @@ android {
         multiDexEnabled false
         ndk {
             ldLibs "log"
-            android.ndkVersion "22.1.7171670"
             abiFilters 'arm64-v8a', 'armeabi-v7a'
         }
     }
