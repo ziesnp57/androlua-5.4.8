@@ -51,5 +51,20 @@ LOCAL_SRC_FILES := \
 	lzio.c
 
 LOCAL_CFLAGS += -DLUA_DL_DLOPEN -DLUA_COMPAT_MATHLIB -DLUA_COMPAT_MAXN -DLUA_COMPAT_MODULE
+
+# 针对不同 ABI 设置架构优化
+ifeq ($(TARGET_ARCH_ABI), arm64-v8a)
+    LOCAL_CFLAGS += -march=armv8-a
+endif
+ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)
+    LOCAL_CFLAGS += -march=armv7-a
+endif
+ifeq ($(TARGET_ARCH_ABI), x86_64)
+    LOCAL_CFLAGS += -march=x86-64
+endif
+ifeq ($(TARGET_ARCH_ABI), x86)
+    LOCAL_CFLAGS += -march=i686
+endif
+
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog -ldl
 include $(BUILD_STATIC_LIBRARY) 

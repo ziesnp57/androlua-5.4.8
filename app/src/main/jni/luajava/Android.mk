@@ -7,6 +7,19 @@ LOCAL_CFLAGS := -std=c17 -O3 -flto \
                 -ffunction-sections -fdata-sections \
                 -fstrict-aliasing
 
+# 针对不同 ABI 设置架构优化
+ifeq ($(TARGET_ARCH_ABI), arm64-v8a)
+    LOCAL_CFLAGS += -march=armv8-a
+endif
+ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)
+    LOCAL_CFLAGS += -march=armv7-a
+endif
+ifeq ($(TARGET_ARCH_ABI), x86_64)
+    LOCAL_CFLAGS += -march=x86-64
+endif
+ifeq ($(TARGET_ARCH_ABI), x86)
+    LOCAL_CFLAGS += -march=i686
+endif
 LOCAL_CFLAGS += -g0 -DNDEBUG
 
 # 极致性能构建配置
