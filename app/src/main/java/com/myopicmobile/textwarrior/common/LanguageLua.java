@@ -22,7 +22,7 @@ public class LanguageLua extends Language {
 	private final static String keywordTarget ="and|break|case|catch|continue|default|defer|do|else|elseif|end|false|finally|for|function|goto|if|in|lambda|local|nil|not|or|repeat|return|switch|then|true|try|until|when|while";
 	private final static String globalTarget="self|__add|__band|__bnot|__bor|__bxor|__call|__close|__concat|__div|__eq|__gc|__idiv|__index|__le|__len|__lt|__mod|__mul|__newindex|__pow|__shl|__shr|__sub|__tostring|__unm|_ENV|_G|assert|collectgarbage|dofile|error|getfenv|getmetatable|ipairs|load|loadfile|loadstring|module|next|pairs|pcall|print|rawequal|rawget|rawlen|rawset|require|select|self|setfenv|setmetatable|tointeger|tonumber|tostring|type|unpack|xpcall";
 	
-	private final static String packageName="coroutine|debug|io|luajava|math|os|package|string|table|utf8";
+	private final static String packageName="coroutine|debug|io|luajava|math|os|package|string|table|utf8|bit";
 	private final static String package_coroutine = "create|isyieldable|resume|running|status|wrap|yield";
 	private final static String package_debug = "debug|gethook|getinfo|getlocal|getmetatable|getregistry|getupvalue|getuservalue|sethook|setlocal|setmetatable|setupvalue|setuservalue|traceback|upvalueid|upvaluejoin";
 	private final static String package_io = "close|flush|info|input|isdir|lines|ls|mkdir|open|output|popen|read|readall|stderr|stdin|stdout|tmpfile|type|write";
@@ -33,6 +33,7 @@ public class LanguageLua extends Language {
 	private final static String package_string = "byte|char|dump|find|format|gfind|gmatch|gsub|len|lower|match|rep|reverse|sub|upper";
 	private final static String package_table = "clear|clone|concat|const|find|foreach|foreachi|gfind|insert|maxn|move|pack|remove|size|sort|unpack";
 	private final static String package_utf8 = "byte|char|charpattern|charpos|codepoint|codes|escape|find|fold|gfind|gmatch|gsub|insert|len|lower|match|ncasecmp|next|offset|remove|reverse|sub|title|upper|width|widthindex";
+	private final static String package_bit = "arshift|band|bnot|bor|bxor|btest|extract|lrotate|lshift|replace|rrotate|rshift";
 	private final static String extFunctionTarget="activity|call|compile|dump|each|enum|import|loadbitmap|loadlayout|loadmenu|service|set|task|thread|timer";
 	private final static String functionTarget   = globalTarget+"|"+extFunctionTarget+"|"+packageName;
 	private final static String[] keywords = keywordTarget.split("\\|");
@@ -65,6 +66,7 @@ public class LanguageLua extends Language {
 		super.addBasePackage("coroutine",package_coroutine.split("\\|"));
 		super.addBasePackage("package",package_package.split("\\|"));
 		super.addBasePackage("debug",package_debug.split("\\|"));
+		super.addBasePackage("bit",package_bit.split("\\|"));
 	}
 	
 	/**
