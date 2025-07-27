@@ -47,6 +47,7 @@ LOCAL_SRC_FILES := \
 	lua.c \
 	lundump.c \
 	lutf8lib.c \
+	lbitlib.c \
 	lvm.c \
 	lzio.c
 
