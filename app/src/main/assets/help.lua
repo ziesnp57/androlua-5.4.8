@@ -1322,11 +1322,11 @@ help_dlg.setContentView(help_sv)
 
 func={}
 func["捐赠"]=function()
-    intent = Intent();
-    intent.setAction("android.intent.action.VIEW");
-    content_url = Uri.parse("https://qr.alipay.com/apt7ujjb4jngmu3z9a");
-    intent.setData(content_url);
-    activity.startActivity(intent);
+--     intent = Intent();
+--     intent.setAction("android.intent.action.VIEW");
+--     content_url = Uri.parse("https://qr.alipay.com/apt7ujjb4jngmu3z9a");
+--     intent.setData(content_url);
+--     activity.startActivity(intent);
     end
 func["返回"]=function()
     activity.finish()
